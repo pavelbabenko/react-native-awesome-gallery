@@ -1,6 +1,6 @@
 {
   "name": "react-native-awesome-gallery",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Awesome gallery with Reanimated v2",
   "main": "lib/commonjs/index",
   "module": "lib/module/index",
@@ -36,13 +36,16 @@
     "ios",
     "android"
   ],
-  "repository": "https://github.com/Flair-Dev/react-native-awesome-gallery",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Flair-Dev/react-native-awesome-gallery.git"
+  },
   "author": "pavelbabenko <pavelbabenko01@gmail.com> (https://github.com/pavelbabenko)",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/pavelbabenko/react-native-awesome-gallery/issues"
+    "url": "https://github.com/Flair-Dev/react-native-awesome-gallery/issues"
   },
-  "homepage": "https://github.com/pavelbabenko/react-native-awesome-gallery#readme",
+  "homepage": "https://github.com/Flair-Dev/react-native-awesome-gallery#readme",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/"
   },
