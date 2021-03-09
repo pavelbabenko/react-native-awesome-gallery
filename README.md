@@ -1,6 +1,9 @@
 <p align="center">
-  <h1>React Native Awesome Gallery</h1>
-  <h3>Photos gallery powered by Reanimated v2 and react-native-gesture-handler</h3>
+  <h1 align="center">React Native Awesome Gallery</h1>
+  <h3 align="center">Photos gallery powered by Reanimated v2 and react-native-gesture-handler</h3>
+</p>
+
+<p align="center">
   <img width="200" height="400" src="./example.gif" alt="Example usage of gallery">
 </p>
 
