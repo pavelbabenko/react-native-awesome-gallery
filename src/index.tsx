@@ -14,8 +14,8 @@ import Animated, {
   withTiming,
   withDecay,
   useAnimatedReaction,
-  Easing,
   runOnJS,
+  withSpring,
 } from 'react-native-reanimated';
 import {
   GestureEvent,
@@ -27,6 +27,7 @@ import {
   TapGestureHandlerEventPayload,
 } from 'react-native-gesture-handler';
 import { useVector } from 'react-native-redash';
+import { clamp, withDecaySpring, withRubberBandClamp } from './utils';
 
 const DOUBLE_TAP_SCALE = 3;
 const MAX_SCALE = 6;
@@ -63,20 +64,23 @@ export const snapPoint = (
   return points.filter((p) => Math.abs(point - p) === minDelta)[0];
 };
 
-export type RenderImageInfo = {
+export type RenderItemInfo<T> = {
   index: number;
-  uri: string;
+  item: T;
   setImageDimensions: (imageDimensions: Dimensions) => void;
 };
 
-const defaultRenderImage = ({ uri, setImageDimensions }: RenderImageInfo) => {
+const defaultRenderImage = ({
+  item,
+  setImageDimensions,
+}: RenderItemInfo<any>) => {
   return (
     <Image
       onLoad={(e) => {
         const { height: h, width: w } = e.nativeEvent.source;
         setImageDimensions({ height: h, width: w });
       }}
-      source={{ uri }}
+      source={{ uri: item }}
       resizeMode="contain"
       style={StyleSheet.absoluteFillObject}
     />
@@ -91,33 +95,38 @@ type EventsCallbacks = {
   onPanStart?: () => void;
 };
 
-type Props = EventsCallbacks & {
-  uri: string;
+type RenderItem<T> = (
+  imageInfo: RenderItemInfo<T>
+) => React.ReactElement | null;
+
+type Props<T> = EventsCallbacks & {
+  item: T;
   index: number;
   isFirst: boolean;
   isLast: boolean;
   translateX: Animated.SharedValue<number>;
   currentProgress: Animated.SharedValue<number>;
   currentIndex: Animated.SharedValue<number>;
-  renderImage: (imageInfo: RenderImageInfo) => React.ReactElement | null;
+  renderItem: RenderItem<T>;
   width: number;
   height: number;
+  length: number;
 
   emptySpaceWidth: number;
   doubleTapScale: number;
   maxScale: number;
 };
 
-const ResizableImage: React.FC<Props> = React.memo(
-  ({
-    uri,
+const ResizableImage = React.memo(
+  <T extends any>({
+    item,
     translateX,
     index,
     isFirst,
     isLast,
     currentProgress,
     currentIndex,
-    renderImage,
+    renderItem,
     width,
     height,
     onSwipeToClose,
@@ -128,13 +137,18 @@ const ResizableImage: React.FC<Props> = React.memo(
     emptySpaceWidth,
     doubleTapScale,
     maxScale,
-  }) => {
+    length,
+  }: Props<T>) => {
     const CENTER = {
       x: width / 2,
       y: height / 2,
     };
 
     const { pinch, tap, doubleTap, pan } = useRefs();
+
+    const pinchActive = useSharedValue(false);
+
+    const panActive = useSharedValue(false);
 
     const offset = useVector(0, 0);
 
@@ -168,12 +182,6 @@ const ResizableImage: React.FC<Props> = React.memo(
       offset.y.value = animated ? withTiming(0) : 0;
       translation.x.value = animated ? withTiming(0) : 0;
       translation.y.value = animated ? withTiming(0) : 0;
-    };
-
-    const clamp = (value: number, min: number, max: number) => {
-      'worklet';
-
-      return Math.max(Math.min(value, max), min);
     };
 
     const getEdgeX = () => {
@@ -233,6 +241,9 @@ const ResizableImage: React.FC<Props> = React.memo(
       {
         onStart: ({ focalX, focalY }, ctx) => {
           if (!isActive.value) return;
+          if (panActive.value) return;
+
+          pinchActive.value = true;
 
           if (onScaleStart) {
             runOnJS(onScaleStart)();
@@ -250,6 +261,7 @@ const ResizableImage: React.FC<Props> = React.memo(
         onActive: ({ scale: s, focalX, focalY, numberOfPointers }, ctx) => {
           if (!isActive.value) return;
           if (numberOfPointers !== 2) return;
+          if (panActive.value) return;
 
           let nextScale = s * ctx.scaleOffset;
 
@@ -273,6 +285,8 @@ const ResizableImage: React.FC<Props> = React.memo(
         },
         onEnd: () => {
           if (!isActive.value) return;
+
+          pinchActive.value = false;
 
           if (scale.value < 1) {
             resetValues();
@@ -361,6 +375,32 @@ const ResizableImage: React.FC<Props> = React.memo(
       },
     });
 
+    const onPanEnd = (velocityX: number) => {
+      'worklet';
+
+      if (Math.abs(translateX.value - getPosition()) > 0) {
+        const snapTo = snapPoint(
+          translateX.value,
+          velocityX,
+          [index - 1, index, index + 1]
+            .filter((_, y) => (isFirst ? y !== 0 : isLast ? y !== 2 : true))
+            .map((i) => getPosition(i))
+        );
+
+        if (Math.abs(snapTo - translateX.value) <= width) {
+          translateX.value = withSpring(snapTo, {
+            damping: 800,
+            mass: 1,
+            stiffness: 250,
+            restDisplacementThreshold: 0.02,
+            restSpeedThreshold: 4,
+          });
+        } else {
+          translateX.value = getPosition();
+        }
+      }
+    };
+
     const panHandler = useAnimatedGestureHandler<
       GestureEvent<PanGestureHandlerEventPayload>,
       {
@@ -373,6 +413,9 @@ const ResizableImage: React.FC<Props> = React.memo(
       {
         onStart: ({ velocityY, velocityX }, ctx) => {
           if (!isActive.value) return;
+          if (pinchActive.value) return;
+
+          panActive.value = true;
 
           if (onPanStart) {
             runOnJS(onPanStart)();
@@ -384,6 +427,7 @@ const ResizableImage: React.FC<Props> = React.memo(
         },
         onActive: ({ translationX, translationY, velocityY }, ctx) => {
           if (!isActive.value) return;
+          if (pinchActive.value) return;
 
           const x = getEdgeX();
 
@@ -393,18 +437,26 @@ const ResizableImage: React.FC<Props> = React.memo(
               x[0] - offset.x.value,
               x[1] - offset.x.value
             );
-            translateX.value = ctx.initialTranslateX + translationX - clampedX;
+
+            translateX.value = -withRubberBandClamp(
+              (ctx.initialTranslateX + translationX - clampedX) * -1,
+              0.55,
+              width,
+              [0, width * length]
+            );
             translation.x.value = clampedX;
           }
 
           const newHeight = scale.value * layout.y.value;
 
+          const edgeY = getEdgeY();
+
           if (newHeight > height) {
-            const edgeY = getEdgeY();
-            translation.y.value = clamp(
+            translation.y.value = withRubberBandClamp(
               translationY,
-              edgeY[0] - offset.y.value,
-              edgeY[1] - offset.y.value
+              0.55,
+              newHeight,
+              [edgeY[0] - offset.y.value, edgeY[1] - offset.y.value]
             );
           } else if (
             !(scale.value === 1 && translateX.value !== getPosition())
@@ -412,43 +464,29 @@ const ResizableImage: React.FC<Props> = React.memo(
             translation.y.value = translationY;
           }
 
-          if (ctx.isVertical && scale.value === 1) {
+          if (ctx.isVertical && newHeight < height) {
             ctx.shouldClose = Math.abs(translationY + velocityY * 0.2) > 220;
           }
         },
         onEnd: ({ velocityX, velocityY }, ctx) => {
           if (!isActive.value) return;
 
+          panActive.value = false;
+
           const newWidth = scale.value * layout.x.value;
           const newHeight = scale.value * layout.y.value;
 
-          if (Math.abs(translateX.value - getPosition()) > 0) {
-            const snapTo = snapPoint(
-              translateX.value,
-              velocityX,
-              [index - 1, index, index + 1]
-                .filter((_, y) => (isFirst ? y !== 0 : isLast ? y !== 2 : true))
-                .map((i) => getPosition(i))
-            );
+          onPanEnd(velocityX);
 
-            if (Math.abs(snapTo - translateX.value) <= width) {
-              translateX.value = withTiming(snapTo, {
-                duration: 300,
-                easing: Easing.bezier(0.61, 1, 0.88, 1),
-              });
-            } else {
-              translateX.value = getPosition();
-            }
+          if (translateX.value === getPosition()) {
+            offset.x.value = withDecaySpring({
+              velocity: velocityX,
+              clamp: [
+                -(newWidth - width) / 2 - translation.x.value,
+                (newWidth - width) / 2 - translation.x.value,
+              ],
+            });
           }
-
-          offset.x.value = withDecay({
-            velocity: velocityX,
-            deceleration: 0.997,
-            clamp: [
-              -(newWidth - width) / 2 - translation.x.value,
-              (newWidth - width) / 2 - translation.x.value,
-            ],
-          });
 
           if (onSwipeToClose && ctx.shouldClose) {
             offset.y.value = withDecay({
@@ -459,9 +497,8 @@ const ResizableImage: React.FC<Props> = React.memo(
           }
 
           if (newHeight > height) {
-            offset.y.value = withDecay({
+            offset.y.value = withDecaySpring({
               velocity: velocityY,
-              deceleration: 0.997,
               clamp: [
                 -(newHeight - height) / 2 - translation.y.value,
                 (newHeight - height) / 2 - translation.y.value,
@@ -477,6 +514,12 @@ const ResizableImage: React.FC<Props> = React.memo(
               translation.y.value = withTiming(translation.y.value - moveTo);
             }
           }
+        },
+        onFail: ({ velocityX }) => {
+          onPanEnd(velocityX);
+        },
+        onCancel: ({ velocityX }) => {
+          onPanEnd(velocityX);
         },
       },
       [layout.x, layout.y]
@@ -512,15 +555,15 @@ const ResizableImage: React.FC<Props> = React.memo(
       };
     });
 
-    const setImageDimensions: RenderImageInfo['setImageDimensions'] = ({
+    const setImageDimensions: RenderItemInfo<T>['setImageDimensions'] = ({
       width: w,
       height: h,
     }) => {
       layout.y.value = (h * width) / w;
     };
 
-    const imageProps: RenderImageInfo = {
-      uri,
+    const itemProps: RenderItemInfo<T> = {
+      item,
       index,
       setImageDimensions,
     };
@@ -547,7 +590,7 @@ const ResizableImage: React.FC<Props> = React.memo(
                     numberOfTaps={2}
                   >
                     <Animated.View style={{ width, height }}>
-                      {renderImage(imageProps)}
+                      {renderItem(itemProps)}
                     </Animated.View>
                   </TapGestureHandler>
                 </Animated.View>
@@ -560,10 +603,11 @@ const ResizableImage: React.FC<Props> = React.memo(
   }
 );
 
-type GalleryProps = EventsCallbacks & {
-  images: string[];
+type GalleryProps<T> = EventsCallbacks & {
+  data: T[];
 
-  renderImage?: Props['renderImage'];
+  renderItem?: RenderItem<T>;
+  keyExtractor?: (item: T, index: number) => string | number;
   initialIndex?: number;
   onIndexChange?: (index: number) => void;
   numToRender?: number;
@@ -573,9 +617,9 @@ type GalleryProps = EventsCallbacks & {
   style?: ViewStyle;
 };
 
-const Gallery: React.FC<GalleryProps> = ({
-  images,
-  renderImage = defaultRenderImage,
+const Gallery = <T extends any>({
+  data,
+  renderItem = defaultRenderImage,
   initialIndex = 0,
   numToRender = 5,
   emptySpaceWidth = SPACE_BETWEEN_IMAGES,
@@ -583,8 +627,9 @@ const Gallery: React.FC<GalleryProps> = ({
   maxScale = MAX_SCALE,
   onIndexChange,
   style,
+  keyExtractor,
   ...eventsCallbacks
-}) => {
+}: GalleryProps<T>) => {
   const dimensions = useWindowDimensions();
 
   const [index, setIndex] = useState(initialIndex);
@@ -624,35 +669,40 @@ const Gallery: React.FC<GalleryProps> = ({
   return (
     <View style={[{ flex: 1, backgroundColor: 'black' }, style]}>
       <Animated.View style={[{ flex: 1, flexDirection: 'row' }, animatedStyle]}>
-        {images.map((uri, i) => {
+        {data.map((item: any, i) => {
           const isFirst = i === 0;
 
           return (
             <View
-              key={uri}
+              key={
+                keyExtractor
+                  ? keyExtractor(item, i)
+                  : item.id || item.key || item._id || item
+              }
               style={[
                 dimensions,
                 isFirst ? {} : { marginLeft: emptySpaceWidth },
               ]}
             >
               {Math.abs(i - index) > (numToRender - 1) / 2 ? null : (
+                // @ts-ignore
                 <ResizableImage
                   {...{
                     translateX,
-                    uri,
+                    item,
                     currentProgress,
                     currentIndex,
                     index: i,
                     isFirst,
-                    isLast: i === images.length - 1,
-                    renderImage,
+                    isLast: i === data.length - 1,
+                    length: data.length,
+                    renderItem,
                     emptySpaceWidth,
                     doubleTapScale,
                     maxScale,
                     ...eventsCallbacks,
                     ...dimensions,
                   }}
-                  key={uri}
                 />
               )}
             </View>
