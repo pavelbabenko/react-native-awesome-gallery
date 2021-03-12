@@ -4,7 +4,7 @@
 </p>
 
 <p align="center">
-  <img width="200" height="400" src="./example.gif" alt="Example usage of gallery">
+  <img width="200" height="400" src="example-0.0.3.gif" alt="Example usage of gallery">
 </p>
 
 ## Installation
