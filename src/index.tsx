@@ -1,6 +1,7 @@
 import React, { useCallback, useRef, useState } from 'react';
 import {
   Image,
+  Platform,
   StyleSheet,
   useWindowDimensions,
   View,
@@ -16,6 +17,7 @@ import Animated, {
   useAnimatedReaction,
   runOnJS,
   withSpring,
+  cancelAnimation,
 } from 'react-native-reanimated';
 import {
   GestureEvent,
@@ -32,6 +34,8 @@ import { clamp, withDecaySpring, withRubberBandClamp } from './utils';
 const DOUBLE_TAP_SCALE = 3;
 const MAX_SCALE = 6;
 const SPACE_BETWEEN_IMAGES = 40;
+
+const isAndroid = Platform.OS === 'android';
 
 const useRefs = () => {
   const pan = useRef();
@@ -105,7 +109,6 @@ type Props<T> = EventsCallbacks & {
   isFirst: boolean;
   isLast: boolean;
   translateX: Animated.SharedValue<number>;
-  currentProgress: Animated.SharedValue<number>;
   currentIndex: Animated.SharedValue<number>;
   renderItem: RenderItem<T>;
   width: number;
@@ -124,7 +127,6 @@ const ResizableImage = React.memo(
     index,
     isFirst,
     isLast,
-    currentProgress,
     currentIndex,
     renderItem,
     width,
@@ -217,6 +219,8 @@ const ResizableImage = React.memo(
     const onStart = () => {
       'worklet';
 
+      cancelAnimation(translateX);
+
       offset.x.value = offset.x.value + translation.x.value;
       offset.y.value = offset.y.value + translation.y.value;
 
@@ -232,21 +236,32 @@ const ResizableImage = React.memo(
       );
     };
 
+    const getIndexFromPosition = (position: number) => {
+      'worklet';
+
+      return Math.round(position / -(width + emptySpaceWidth));
+    };
+
     const gestureHandler = useAnimatedGestureHandler<
       GestureEvent<PinchGestureHandlerEventPayload>,
       {
         scaleOffset: number;
+        androidPinchActivated: boolean;
       }
     >(
       {
         onStart: ({ focalX, focalY }, ctx) => {
           if (!isActive.value) return;
-          if (panActive.value) return;
+          if (panActive.value && !isAndroid) return;
 
           pinchActive.value = true;
 
           if (onScaleStart) {
             runOnJS(onScaleStart)();
+          }
+
+          if (isAndroid) {
+            ctx.androidPinchActivated = false;
           }
 
           onStart();
@@ -260,8 +275,17 @@ const ResizableImage = React.memo(
         },
         onActive: ({ scale: s, focalX, focalY, numberOfPointers }, ctx) => {
           if (!isActive.value) return;
-          if (numberOfPointers !== 2) return;
-          if (panActive.value) return;
+          if (numberOfPointers !== 2 && !isAndroid) return;
+          if (panActive.value && !isAndroid) return;
+
+          if (!ctx.androidPinchActivated && isAndroid) {
+            setAdjustedFocal({ focalX, focalY });
+
+            origin.x.value = adjustedFocal.x.value;
+            origin.y.value = adjustedFocal.y.value;
+
+            ctx.androidPinchActivated = true;
+          }
 
           let nextScale = s * ctx.scaleOffset;
 
@@ -375,32 +399,6 @@ const ResizableImage = React.memo(
       },
     });
 
-    const onPanEnd = (velocityX: number) => {
-      'worklet';
-
-      if (Math.abs(translateX.value - getPosition()) > 0) {
-        const snapTo = snapPoint(
-          translateX.value,
-          velocityX,
-          [index - 1, index, index + 1]
-            .filter((_, y) => (isFirst ? y !== 0 : isLast ? y !== 2 : true))
-            .map((i) => getPosition(i))
-        );
-
-        if (Math.abs(snapTo - translateX.value) <= width) {
-          translateX.value = withSpring(snapTo, {
-            damping: 800,
-            mass: 1,
-            stiffness: 250,
-            restDisplacementThreshold: 0.02,
-            restSpeedThreshold: 4,
-          });
-        } else {
-          translateX.value = getPosition();
-        }
-      }
-    };
-
     const panHandler = useAnimatedGestureHandler<
       GestureEvent<PanGestureHandlerEventPayload>,
       {
@@ -413,7 +411,7 @@ const ResizableImage = React.memo(
       {
         onStart: ({ velocityY, velocityX }, ctx) => {
           if (!isActive.value) return;
-          if (pinchActive.value) return;
+          if (pinchActive.value && !isAndroid) return;
 
           panActive.value = true;
 
@@ -427,7 +425,7 @@ const ResizableImage = React.memo(
         },
         onActive: ({ translationX, translationY, velocityY }, ctx) => {
           if (!isActive.value) return;
-          if (pinchActive.value) return;
+          if (pinchActive.value && !isAndroid) return;
 
           const x = getEdgeX();
 
@@ -468,17 +466,41 @@ const ResizableImage = React.memo(
             ctx.shouldClose = Math.abs(translationY + velocityY * 0.2) > 220;
           }
         },
-        onEnd: ({ velocityX, velocityY }, ctx) => {
+        onFinish: ({ velocityX, velocityY }, ctx) => {
           if (!isActive.value) return;
 
           panActive.value = false;
 
-          const newWidth = scale.value * layout.x.value;
           const newHeight = scale.value * layout.y.value;
 
-          onPanEnd(velocityX);
+          const edgeX = getEdgeX();
 
-          if (translateX.value === getPosition()) {
+          if (
+            Math.abs(translateX.value - getPosition()) > 0 &&
+            edgeX.some((x) => x === translation.x.value + offset.x.value)
+          ) {
+            const snapPoints = [index - 1, index, index + 1]
+              .filter((_, y) => (isFirst ? y !== 0 : isLast ? y !== 2 : true))
+              .map((i) => getPosition(i));
+
+            const snapTo = snapPoint(translateX.value, velocityX, snapPoints);
+
+            const nextIndex = getIndexFromPosition(snapTo);
+
+            if (currentIndex.value !== nextIndex) {
+              currentIndex.value = nextIndex;
+            }
+
+            translateX.value = withSpring(snapTo, {
+              damping: 800,
+              mass: 1,
+              stiffness: 250,
+              restDisplacementThreshold: 0.02,
+              restSpeedThreshold: 4,
+            });
+          } else {
+            const newWidth = scale.value * layout.x.value;
+
             offset.x.value = withDecaySpring({
               velocity: velocityX,
               clamp: [
@@ -515,31 +537,19 @@ const ResizableImage = React.memo(
             }
           }
         },
-        onFail: ({ velocityX }) => {
-          onPanEnd(velocityX);
-        },
-        onCancel: ({ velocityX }) => {
-          onPanEnd(velocityX);
-        },
       },
       [layout.x, layout.y]
     );
 
     useAnimatedReaction(
       () => {
-        if (
-          Math.abs(currentProgress.value - index) < 0.2 &&
-          currentIndex.value !== index
-        ) {
-          currentIndex.value = index;
-        }
         return {
-          progress: currentProgress.value,
+          i: currentIndex.value,
           currentScale: scale.value,
         };
       },
-      ({ progress, currentScale }) => {
-        if (Math.abs(progress - index) === 2 && currentScale > 1) {
+      ({ i, currentScale }) => {
+        if (Math.abs(i - index) === 2 && currentScale > 1) {
           resetValues(false);
         }
       }
@@ -569,12 +579,19 @@ const ResizableImage = React.memo(
     };
 
     return (
-      <PanGestureHandler ref={pan} onGestureEvent={panHandler} minDist={10}>
+      <PanGestureHandler
+        ref={pan}
+        onGestureEvent={panHandler}
+        minDist={10}
+        minPointers={1}
+        maxPointers={1}
+      >
         <Animated.View style={[{ width, height }]}>
           <PinchGestureHandler
             ref={pinch}
             simultaneousHandlers={[pan]}
             onGestureEvent={gestureHandler}
+            minPointers={2}
           >
             <Animated.View style={{ width, height }}>
               <TapGestureHandler
@@ -640,11 +657,6 @@ const Gallery = <T extends any>({
 
   const currentIndex = useSharedValue(initialIndex);
 
-  const currentProgress = useDerivedValue(
-    () => Math.abs(-translateX.value) / (dimensions.width + emptySpaceWidth),
-    [translateX.value]
-  );
-
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: translateX.value }],
   }));
@@ -690,7 +702,6 @@ const Gallery = <T extends any>({
                   {...{
                     translateX,
                     item,
-                    currentProgress,
                     currentIndex,
                     index: i,
                     isFirst,
