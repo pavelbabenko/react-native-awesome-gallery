@@ -632,6 +632,7 @@ type GalleryProps<T> = EventsCallbacks & {
   doubleTapScale?: number;
   maxScale?: number;
   style?: ViewStyle;
+  containerDimensions?: { width: number; height: number };
 };
 
 const Gallery = <T extends any>({
@@ -645,9 +646,11 @@ const Gallery = <T extends any>({
   onIndexChange,
   style,
   keyExtractor,
+  containerDimensions,
   ...eventsCallbacks
 }: GalleryProps<T>) => {
-  const dimensions = useWindowDimensions();
+  const windowDimensions = useWindowDimensions();
+  const dimensions = containerDimensions || windowDimensions;
 
   const [index, setIndex] = useState(initialIndex);
 
