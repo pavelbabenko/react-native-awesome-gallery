@@ -46,7 +46,7 @@ export function withDecaySpring(
           const m = config.mass;
           const k = config.stiffness;
 
-          const v0 = -velocity;
+          const springV0 = -velocity;
           const x0 = toValue - current;
 
           const zeta = c / (2 * Math.sqrt(k * m)); // damping ratio
@@ -62,23 +62,24 @@ export function withDecaySpring(
           const underDampedEnvelope = Math.exp(-zeta * omega0 * t);
           const underDampedFrag1 =
             underDampedEnvelope *
-            (sin1 * ((v0 + zeta * omega0 * x0) / omega1) + x0 * cos1);
+            (sin1 * ((springV0 + zeta * omega0 * x0) / omega1) + x0 * cos1);
 
           const underDampedPosition = toValue - underDampedFrag1;
           // This looks crazy -- it's actually just the derivative of the oscillation function
           const underDampedVelocity =
             zeta * omega0 * underDampedFrag1 -
             underDampedEnvelope *
-              (cos1 * (v0 + zeta * omega0 * x0) - omega1 * x0 * sin1);
+              (cos1 * (springV0 + zeta * omega0 * x0) - omega1 * x0 * sin1);
 
           // critically damped
           const criticallyDampedEnvelope = Math.exp(-omega0 * t);
           const criticallyDampedPosition =
-            toValue - criticallyDampedEnvelope * (x0 + (v0 + omega0 * x0) * t);
+            toValue -
+            criticallyDampedEnvelope * (x0 + (springV0 + omega0 * x0) * t);
 
           const criticallyDampedVelocity =
             criticallyDampedEnvelope *
-            (v0 * (t * omega0 - 1) + t * x0 * omega0 * omega0);
+            (springV0 * (t * omega0 - 1) + t * x0 * omega0 * omega0);
 
           const isOvershooting = () => {
             if (config.overshootClamping && config.stiffness !== 0) {

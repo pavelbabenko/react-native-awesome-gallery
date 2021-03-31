@@ -1,6 +1,6 @@
 {
   "name": "react-native-awesome-gallery",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "Awesome gallery with Reanimated v2",
   "main": "lib/commonjs/index",
   "module": "lib/module/index",
@@ -75,8 +75,8 @@
   "peerDependencies": {
     "react": "*",
     "react-native": "*",
-    "react-native-reanimated": "^2.0.0-rc.3",
-    "react-native-gesture-handler": "^1.10.1"
+    "react-native-gesture-handler": "^1.10.1",
+    "react-native-reanimated": "^2.0.0-rc.3"
   },
   "jest": {
     "preset": "react-native",
