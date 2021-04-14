@@ -436,11 +436,11 @@ const ResizableImage = React.memo(
               x[1] - offset.x.value
             );
 
-            translateX.value = -withRubberBandClamp(
-              (ctx.initialTranslateX + translationX - clampedX) * -1,
+            translateX.value = withRubberBandClamp(
+              ctx.initialTranslateX + translationX - clampedX,
               0.55,
               width,
-              [0, width * length]
+              [getPosition(length - 1), 0]
             );
             translation.x.value = clampedX;
           }
@@ -480,7 +480,15 @@ const ResizableImage = React.memo(
             edgeX.some((x) => x === translation.x.value + offset.x.value)
           ) {
             const snapPoints = [index - 1, index, index + 1]
-              .filter((_, y) => (isFirst ? y !== 0 : isLast ? y !== 2 : true))
+              .filter((_, y) => {
+                if (y === 0) {
+                  return !isFirst;
+                }
+                if (y === 2) {
+                  return !isLast;
+                }
+                return true;
+              })
               .map((i) => getPosition(i));
 
             const snapTo = snapPoint(translateX.value, velocityX, snapPoints);

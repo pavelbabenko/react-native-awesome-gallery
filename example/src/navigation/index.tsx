@@ -22,6 +22,7 @@ export const Navigator = () => {
                 opacity: current.progress,
               },
             }),
+            gestureEnabled: false,
           }}
           sharedElements={(route, _, showing) => {
             const { index } = route.params;
