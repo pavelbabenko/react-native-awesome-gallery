@@ -192,6 +192,10 @@ const ResizableImage = React.memo(
 
       const point = (newWidth - width) / 2;
 
+      if (point < 0) {
+        return [-0, 0];
+      }
+
       return [-point, point];
     };
 
@@ -321,14 +325,18 @@ const ResizableImage = React.memo(
             const diffX =
               translation.x.value + offset.x.value - (newWidth - width) / 2;
 
-            if (diffX > 0) {
-              translation.x.value = withTiming(translation.x.value - diffX);
-            }
+            if (offset.x.value <= width) {
+              translation.x.value = withTiming(0);
+            } else {
+              if (diffX > 0) {
+                translation.x.value = withTiming(translation.x.value - diffX);
+              }
 
-            if (newWidth + diffX < width) {
-              translation.x.value = withTiming(
-                translation.x.value + width - (newWidth + diffX)
-              );
+              if (newWidth + diffX < width) {
+                translation.x.value = withTiming(
+                  translation.x.value + width - (newWidth + diffX)
+                );
+              }
             }
 
             const diffY =
@@ -462,7 +470,7 @@ const ResizableImage = React.memo(
             translation.y.value = translationY;
           }
 
-          if (ctx.isVertical && newHeight < height) {
+          if (ctx.isVertical && newHeight <= height) {
             ctx.shouldClose = Math.abs(translationY + velocityY * 0.2) > 220;
           }
         },
@@ -538,7 +546,7 @@ const ResizableImage = React.memo(
             const diffY =
               translation.y.value + offset.y.value - (newHeight - height) / 2;
 
-            if (newHeight < height && diffY !== height - diffY - newHeight) {
+            if (newHeight <= height && diffY !== height - diffY - newHeight) {
               const moveTo = diffY - (height - newHeight) / 2;
 
               translation.y.value = withTiming(translation.y.value - moveTo);
@@ -577,7 +585,11 @@ const ResizableImage = React.memo(
       width: w,
       height: h,
     }) => {
-      layout.y.value = (h * width) / w;
+      const imageHeight = Math.min((h * width) / w, height);
+      layout.y.value = imageHeight;
+      if (imageHeight === height) {
+        layout.x.value = (w * height) / h;
+      }
     };
 
     const itemProps: RenderItemInfo<T> = {
