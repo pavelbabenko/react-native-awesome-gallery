@@ -118,6 +118,7 @@ type Props<T> = EventsCallbacks & {
   emptySpaceWidth: number;
   doubleTapScale: number;
   maxScale: number;
+  disableTransitionOnScaledImage: boolean;
 };
 
 const ResizableImage = React.memo(
@@ -139,6 +140,7 @@ const ResizableImage = React.memo(
     emptySpaceWidth,
     doubleTapScale,
     maxScale,
+    disableTransitionOnScaledImage,
     length,
   }: Props<T>) => {
     const CENTER = {
@@ -448,7 +450,9 @@ const ResizableImage = React.memo(
               ctx.initialTranslateX + translationX - clampedX,
               0.55,
               width,
-              [getPosition(length - 1), 0]
+              disableTransitionOnScaledImage && scale.value > 1
+                ? [getPosition(index), getPosition(index + 1)]
+                : [getPosition(length - 1), 0]
             );
             translation.x.value = clampedX;
           }
@@ -487,7 +491,7 @@ const ResizableImage = React.memo(
             Math.abs(translateX.value - getPosition()) > 0 &&
             edgeX.some((x) => x === translation.x.value + offset.x.value)
           ) {
-            const snapPoints = [index - 1, index, index + 1]
+            let snapPoints = [index - 1, index, index + 1]
               .filter((_, y) => {
                 if (y === 0) {
                   return !isFirst;
@@ -498,6 +502,10 @@ const ResizableImage = React.memo(
                 return true;
               })
               .map((i) => getPosition(i));
+
+            if (disableTransitionOnScaledImage && scale.value > 1) {
+              snapPoints = [getPosition(index)];
+            }
 
             const snapTo = snapPoint(translateX.value, velocityX, snapPoints);
 
@@ -653,6 +661,7 @@ type GalleryProps<T> = EventsCallbacks & {
   maxScale?: number;
   style?: ViewStyle;
   containerDimensions?: { width: number; height: number };
+  disableTransitionOnScaledImage?: boolean;
 };
 
 const Gallery = <T extends any>({
@@ -663,6 +672,7 @@ const Gallery = <T extends any>({
   emptySpaceWidth = SPACE_BETWEEN_IMAGES,
   doubleTapScale = DOUBLE_TAP_SCALE,
   maxScale = MAX_SCALE,
+  disableTransitionOnScaledImage = false,
   onIndexChange,
   style,
   keyExtractor,
@@ -734,6 +744,7 @@ const Gallery = <T extends any>({
                     emptySpaceWidth,
                     doubleTapScale,
                     maxScale,
+                    disableTransitionOnScaledImage,
                     ...eventsCallbacks,
                     ...dimensions,
                   }}
