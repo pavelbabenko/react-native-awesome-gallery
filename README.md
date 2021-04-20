@@ -1,3 +1,6 @@
+[![npm version](https://badge.fury.io/js/react-native-awesome-gallery.svg)](https://badge.fury.io/js/react-native-awesome-gallery)
+[![Rate on Openbase](https://badges.openbase.com/js/rating/react-native-awesome-gallery.svg)](https://openbase.com/js/react-native-awesome-gallery?utm_source=embedded&utm_medium=badge&utm_campaign=rate-badge)
+
 <p align="center">
   <h1 align="center">React Native Awesome Gallery</h1>
   <h3 align="center">Photos gallery powered by Reanimated v2 and react-native-gesture-handler</h3>
