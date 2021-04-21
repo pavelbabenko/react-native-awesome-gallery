@@ -125,6 +125,8 @@ type Props<T> = EventsCallbacks & {
   maxScale: number;
   disableTransitionOnScaledImage: boolean;
   disableVerticalSwipe: boolean;
+  onScaleChange?: (scale: number) => void;
+  scaleRange?: { start: number; end: number };
 };
 
 const ResizableImage = React.memo(
@@ -149,6 +151,8 @@ const ResizableImage = React.memo(
     disableTransitionOnScaledImage,
     disableVerticalSwipe,
     length,
+    onScaleChange,
+    scaleRange,
   }: Props<T>) => {
     const CENTER = {
       x: width / 2,
@@ -174,6 +178,29 @@ const ResizableImage = React.memo(
     const layout = useVector(width, 0);
 
     const isActive = useDerivedValue(() => currentIndex.value === index);
+
+    useAnimatedReaction(
+      () => {
+        return scale.value;
+      },
+      (scaleReaction) => {
+        if (!onScaleChange) {
+          return;
+        }
+
+        if (!scaleRange) {
+          runOnJS(onScaleChange)(scaleReaction);
+          return;
+        }
+
+        if (
+          scaleReaction > scaleRange.start &&
+          scaleReaction < scaleRange.end
+        ) {
+          runOnJS(onScaleChange)(scaleReaction);
+        }
+      }
+    );
 
     const setAdjustedFocal = ({
       focalX,
@@ -677,6 +704,8 @@ type GalleryProps<T> = EventsCallbacks & {
   containerDimensions?: { width: number; height: number };
   disableTransitionOnScaledImage?: boolean;
   disableVerticalSwipe?: boolean;
+  onScaleChange?: (scale: number) => void;
+  scaleRange?: { start: number; end: number };
 };
 
 const GalleryComponent = <T extends any>(
@@ -694,6 +723,8 @@ const GalleryComponent = <T extends any>(
     keyExtractor,
     containerDimensions,
     disableVerticalSwipe,
+    onScaleChange,
+    scaleRange,
     ...eventsCallbacks
   }: GalleryProps<T>,
   ref: GalleryReactRef
@@ -773,6 +804,8 @@ const GalleryComponent = <T extends any>(
                     maxScale,
                     disableTransitionOnScaledImage,
                     disableVerticalSwipe,
+                    onScaleChange,
+                    scaleRange,
                     ...eventsCallbacks,
                     ...dimensions,
                   }}
