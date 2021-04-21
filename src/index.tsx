@@ -124,6 +124,7 @@ type Props<T> = EventsCallbacks & {
   doubleTapScale: number;
   maxScale: number;
   disableTransitionOnScaledImage: boolean;
+  disableVerticalSwipe: boolean;
 };
 
 const ResizableImage = React.memo(
@@ -146,6 +147,7 @@ const ResizableImage = React.memo(
     doubleTapScale,
     maxScale,
     disableTransitionOnScaledImage,
+    disableVerticalSwipe,
     length,
   }: Props<T>) => {
     const CENTER = {
@@ -441,6 +443,8 @@ const ResizableImage = React.memo(
         onActive: ({ translationX, translationY, velocityY }, ctx) => {
           if (!isActive.value) return;
           if (pinchActive.value && !isAndroid) return;
+          if (disableVerticalSwipe && scale.value === 1 && ctx.isVertical)
+            return;
 
           const x = getEdgeX();
 
@@ -672,6 +676,7 @@ type GalleryProps<T> = EventsCallbacks & {
   style?: ViewStyle;
   containerDimensions?: { width: number; height: number };
   disableTransitionOnScaledImage?: boolean;
+  disableVerticalSwipe?: boolean;
 };
 
 const GalleryComponent = <T extends any>(
@@ -688,6 +693,7 @@ const GalleryComponent = <T extends any>(
     style,
     keyExtractor,
     containerDimensions,
+    disableVerticalSwipe,
     ...eventsCallbacks
   }: GalleryProps<T>,
   ref: GalleryReactRef
@@ -766,6 +772,7 @@ const GalleryComponent = <T extends any>(
                     doubleTapScale,
                     maxScale,
                     disableTransitionOnScaledImage,
+                    disableVerticalSwipe,
                     ...eventsCallbacks,
                     ...dimensions,
                   }}

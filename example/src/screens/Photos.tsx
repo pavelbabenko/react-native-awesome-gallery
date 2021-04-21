@@ -40,6 +40,7 @@ export const Photos = () => {
   return (
     <View style={styles.container}>
       <AwesomeGallery
+        disableVerticalSwipe
         data={params.images.map((uri) => ({ uri }))}
         keyExtractor={(item) => item.uri}
         renderItem={renderItem}
