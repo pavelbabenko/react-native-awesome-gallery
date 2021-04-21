@@ -1,4 +1,13 @@
-import React, { useCallback, useRef, useState } from 'react';
+import React, {
+  forwardRef,
+  ForwardRefExoticComponent,
+  PropsWithoutRef,
+  RefAttributes,
+  useCallback,
+  useImperativeHandle,
+  useRef,
+  useState,
+} from 'react';
 import {
   Image,
   Platform,
@@ -650,7 +659,7 @@ const ResizableImage = React.memo(
 
 type GalleryProps<T> = EventsCallbacks & {
   data: T[];
-
+  ref?: React.Ref<{ setPage: (index: number) => void }>;
   renderItem?: RenderItem<T>;
   keyExtractor?: (item: T, index: number) => string | number;
   initialIndex?: number;
@@ -664,98 +673,119 @@ type GalleryProps<T> = EventsCallbacks & {
   disableTransitionOnScaledImage?: boolean;
 };
 
-const Gallery = <T extends any>({
-  data,
-  renderItem = defaultRenderImage,
-  initialIndex = 0,
-  numToRender = 5,
-  emptySpaceWidth = SPACE_BETWEEN_IMAGES,
-  doubleTapScale = DOUBLE_TAP_SCALE,
-  maxScale = MAX_SCALE,
-  disableTransitionOnScaledImage = false,
-  onIndexChange,
-  style,
-  keyExtractor,
-  containerDimensions,
-  ...eventsCallbacks
-}: GalleryProps<T>) => {
-  const windowDimensions = useWindowDimensions();
-  const dimensions = containerDimensions || windowDimensions;
+//@ts-ignore
+const Gallery = forwardRef(
+  (
+    {
+      data,
+      renderItem = defaultRenderImage,
+      initialIndex = 0,
+      numToRender = 5,
+      emptySpaceWidth = SPACE_BETWEEN_IMAGES,
+      doubleTapScale = DOUBLE_TAP_SCALE,
+      maxScale = MAX_SCALE,
+      disableTransitionOnScaledImage = false,
+      onIndexChange,
+      style,
+      keyExtractor,
+      containerDimensions,
+      ...eventsCallbacks
+    }: GalleryProps<any>,
+    ref: typeof Gallery
+  ) => {
+    const windowDimensions = useWindowDimensions();
+    const dimensions = containerDimensions || windowDimensions;
 
-  const [index, setIndex] = useState(initialIndex);
+    const [index, setIndex] = useState(initialIndex);
 
-  const translateX = useSharedValue(
-    initialIndex * -(dimensions.width + emptySpaceWidth)
-  );
+    const translateX = useSharedValue(
+      initialIndex * -(dimensions.width + emptySpaceWidth)
+    );
 
-  const currentIndex = useSharedValue(initialIndex);
+    const currentIndex = useSharedValue(initialIndex);
 
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: translateX.value }],
-  }));
+    const animatedStyle = useAnimatedStyle(() => ({
+      transform: [{ translateX: translateX.value }],
+    }));
 
-  const changeIndex = useCallback(
-    (newIndex) => {
-      onIndexChange?.(newIndex);
-      setIndex(newIndex);
-    },
-    [onIndexChange, setIndex]
-  );
+    const changeIndex = useCallback(
+      (newIndex) => {
+        onIndexChange?.(newIndex);
+        setIndex(newIndex);
+      },
+      [onIndexChange, setIndex]
+    );
 
-  useAnimatedReaction(
-    () => currentIndex.value,
-    (newIndex) => {
-      if (newIndex !== initialIndex) {
-        runOnJS(changeIndex)(newIndex);
+    useAnimatedReaction(
+      () => currentIndex.value,
+      (newIndex) => {
+        if (newIndex !== initialIndex) {
+          runOnJS(changeIndex)(newIndex);
+        }
       }
-    }
-  );
+    );
 
-  return (
-    <View style={[{ flex: 1, backgroundColor: 'black' }, style]}>
-      <Animated.View style={[{ flex: 1, flexDirection: 'row' }, animatedStyle]}>
-        {data.map((item: any, i) => {
-          const isFirst = i === 0;
+    // @ts-ignore
+    useImperativeHandle(ref, () => ({
+      setPage(selectedIndex: number) {
+        setIndex(selectedIndex);
+        currentIndex.value = selectedIndex;
+        translateX.value =
+          selectedIndex * -(dimensions.width + emptySpaceWidth);
+      },
+    }));
 
-          return (
-            <View
-              key={
-                keyExtractor
-                  ? keyExtractor(item, i)
-                  : item.id || item.key || item._id || item
-              }
-              style={[
-                dimensions,
-                isFirst ? {} : { marginLeft: emptySpaceWidth },
-              ]}
-            >
-              {Math.abs(i - index) > (numToRender - 1) / 2 ? null : (
-                // @ts-ignore
-                <ResizableImage
-                  {...{
-                    translateX,
-                    item,
-                    currentIndex,
-                    index: i,
-                    isFirst,
-                    isLast: i === data.length - 1,
-                    length: data.length,
-                    renderItem,
-                    emptySpaceWidth,
-                    doubleTapScale,
-                    maxScale,
-                    disableTransitionOnScaledImage,
-                    ...eventsCallbacks,
-                    ...dimensions,
-                  }}
-                />
-              )}
-            </View>
-          );
-        })}
-      </Animated.View>
-    </View>
-  );
-};
+    return (
+      <View style={[{ flex: 1, backgroundColor: 'black' }, style]}>
+        <Animated.View
+          style={[{ flex: 1, flexDirection: 'row' }, animatedStyle]}
+        >
+          {data.map((item: any, i) => {
+            const isFirst = i === 0;
 
-export default Gallery;
+            return (
+              <View
+                key={
+                  keyExtractor
+                    ? keyExtractor(item, i)
+                    : item.id || item.key || item._id || item
+                }
+                style={[
+                  dimensions,
+                  isFirst ? {} : { marginLeft: emptySpaceWidth },
+                ]}
+              >
+                {Math.abs(i - index) > (numToRender - 1) / 2 ? null : (
+                  // @ts-ignore
+                  <ResizableImage
+                    {...{
+                      translateX,
+                      item,
+                      currentIndex,
+                      index: i,
+                      isFirst,
+                      isLast: i === data.length - 1,
+                      length: data.length,
+                      renderItem,
+                      emptySpaceWidth,
+                      doubleTapScale,
+                      maxScale,
+                      disableTransitionOnScaledImage,
+                      ...eventsCallbacks,
+                      ...dimensions,
+                    }}
+                  />
+                )}
+              </View>
+            );
+          })}
+        </Animated.View>
+      </View>
+    );
+  }
+);
+
+export type GalleryRefType = { setPage: (index: number) => void };
+export default Gallery as ForwardRefExoticComponent<
+  PropsWithoutRef<GalleryProps<any>> & RefAttributes<GalleryRefType>
+>;
