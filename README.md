@@ -55,6 +55,9 @@ return (
 | doubleTapScale?                 | Image scale when double tap is fired                                                                                                                                            | `number`                                                                                         | `3`                                                                    |
 | maxScale?                       | Maximum scale user can set with gesture                                                                                                                                         | `number`                                                                                         | `6`                                                                    |
 | disableTransitionOnScaledImage? | Disables transition to next/previous image when scale > 1                                                                                                                       | `boolean`                                                                                        | `false`                                                                |
+| disableVerticalSwipe?           | Disables vertical swipe when scale == 1                                                                                                                                         | `boolean`                                                                                        | `false`                                                                |
+| onScaleChange?                  | Is called when scale is changed                                                                                                                                                 | `(scale: number) => void`                                                                        | `undefined`                                                            |
+| onScaleChangeRange?             | Shows range of scale in which `onScaleChange` is called                                                                                                                         | `{start: number, end: number}`                                                                   | `undefined`                                                            |
 | containerDimensions?            | Dimensions object for the View that wraps gallery.                                                                                                                              | `{width: number, height: number}`                                                                | value returned from `useWindowDimensions()` hook.                      |
 | style?                          | Style of container                                                                                                                                                              | `ViewStyle`                                                                                      | `undefined`                                                            |
 
@@ -67,6 +70,20 @@ return (
 | onDoubleTap    | Fired when user double tap on image  | `Function` |
 | onScaleStart   | Fired when pinch gesture starts      | `Function` |
 | onPanStart     | Fired when pan gesture starts        | `Function` |
+
+## Methods
+
+```js
+import Gallery, { GalleryRef } from 'react-native-awesome-gallery';
+
+// ...
+
+const ref = useRef<GalleryRef>(null);
+```
+
+| Prop     | Description       | Type                         |
+| -------- | ----------------- | ---------------------------- |
+| setIndex | Sets active index | `(newIndex: number) => void` |
 
 ## Contributing
 

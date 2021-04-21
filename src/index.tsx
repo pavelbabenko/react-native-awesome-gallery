@@ -684,7 +684,7 @@ const ResizableImage = React.memo(
   }
 );
 
-export type GalleryRef = { setPage: (index: number) => void };
+export type GalleryRef = { setIndex: (newIndex: number) => void };
 
 export type GalleryReactRef = React.Ref<GalleryRef>;
 
@@ -762,10 +762,10 @@ const GalleryComponent = <T extends any>(
   );
 
   useImperativeHandle(ref, () => ({
-    setPage(selectedIndex: number) {
-      setIndex(selectedIndex);
-      currentIndex.value = selectedIndex;
-      translateX.value = selectedIndex * -(dimensions.width + emptySpaceWidth);
+    setIndex(newIndex: number) {
+      setIndex(newIndex);
+      currentIndex.value = newIndex;
+      translateX.value = newIndex * -(dimensions.width + emptySpaceWidth);
     },
   }));
 
