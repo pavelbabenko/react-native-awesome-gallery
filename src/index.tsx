@@ -1,4 +1,9 @@
-import React, { useCallback, useRef, useState } from 'react';
+import React, {
+  useCallback,
+  useImperativeHandle,
+  useRef,
+  useState,
+} from 'react';
 import {
   Image,
   Platform,
@@ -648,7 +653,12 @@ const ResizableImage = React.memo(
   }
 );
 
+export type GalleryRef = { setPage: (index: number) => void };
+
+export type GalleryReactRef = React.Ref<GalleryRef>;
+
 type GalleryProps<T> = EventsCallbacks & {
+  ref?: GalleryReactRef;
   data: T[];
 
   renderItem?: RenderItem<T>;
@@ -664,21 +674,24 @@ type GalleryProps<T> = EventsCallbacks & {
   disableTransitionOnScaledImage?: boolean;
 };
 
-const Gallery = <T extends any>({
-  data,
-  renderItem = defaultRenderImage,
-  initialIndex = 0,
-  numToRender = 5,
-  emptySpaceWidth = SPACE_BETWEEN_IMAGES,
-  doubleTapScale = DOUBLE_TAP_SCALE,
-  maxScale = MAX_SCALE,
-  disableTransitionOnScaledImage = false,
-  onIndexChange,
-  style,
-  keyExtractor,
-  containerDimensions,
-  ...eventsCallbacks
-}: GalleryProps<T>) => {
+const GalleryComponent = <T extends any>(
+  {
+    data,
+    renderItem = defaultRenderImage,
+    initialIndex = 0,
+    numToRender = 5,
+    emptySpaceWidth = SPACE_BETWEEN_IMAGES,
+    doubleTapScale = DOUBLE_TAP_SCALE,
+    maxScale = MAX_SCALE,
+    disableTransitionOnScaledImage = false,
+    onIndexChange,
+    style,
+    keyExtractor,
+    containerDimensions,
+    ...eventsCallbacks
+  }: GalleryProps<T>,
+  ref: GalleryReactRef
+) => {
   const windowDimensions = useWindowDimensions();
   const dimensions = containerDimensions || windowDimensions;
 
@@ -710,6 +723,14 @@ const Gallery = <T extends any>({
       }
     }
   );
+
+  useImperativeHandle(ref, () => ({
+    setPage(selectedIndex: number) {
+      setIndex(selectedIndex);
+      currentIndex.value = selectedIndex;
+      translateX.value = selectedIndex * -(dimensions.width + emptySpaceWidth);
+    },
+  }));
 
   return (
     <View style={[{ flex: 1, backgroundColor: 'black' }, style]}>
@@ -757,5 +778,9 @@ const Gallery = <T extends any>({
     </View>
   );
 };
+
+const Gallery = React.forwardRef(GalleryComponent) as <T extends any>(
+  p: GalleryProps<T> & { ref?: GalleryReactRef }
+) => React.ReactElement;
 
 export default Gallery;
