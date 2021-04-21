@@ -126,7 +126,7 @@ type Props<T> = EventsCallbacks & {
   disableTransitionOnScaledImage: boolean;
   disableVerticalSwipe: boolean;
   onScaleChange?: (scale: number) => void;
-  scaleRange?: { start: number; end: number };
+  onScaleChangeRange?: { start: number; end: number };
 };
 
 const ResizableImage = React.memo(
@@ -152,7 +152,7 @@ const ResizableImage = React.memo(
     disableVerticalSwipe,
     length,
     onScaleChange,
-    scaleRange,
+    onScaleChangeRange,
   }: Props<T>) => {
     const CENTER = {
       x: width / 2,
@@ -188,14 +188,14 @@ const ResizableImage = React.memo(
           return;
         }
 
-        if (!scaleRange) {
+        if (!onScaleChangeRange) {
           runOnJS(onScaleChange)(scaleReaction);
           return;
         }
 
         if (
-          scaleReaction > scaleRange.start &&
-          scaleReaction < scaleRange.end
+          scaleReaction > onScaleChangeRange.start &&
+          scaleReaction < onScaleChangeRange.end
         ) {
           runOnJS(onScaleChange)(scaleReaction);
         }
@@ -705,7 +705,7 @@ type GalleryProps<T> = EventsCallbacks & {
   disableTransitionOnScaledImage?: boolean;
   disableVerticalSwipe?: boolean;
   onScaleChange?: (scale: number) => void;
-  scaleRange?: { start: number; end: number };
+  onScaleChangeRange?: { start: number; end: number };
 };
 
 const GalleryComponent = <T extends any>(
@@ -724,7 +724,7 @@ const GalleryComponent = <T extends any>(
     containerDimensions,
     disableVerticalSwipe,
     onScaleChange,
-    scaleRange,
+    onScaleChangeRange,
     ...eventsCallbacks
   }: GalleryProps<T>,
   ref: GalleryReactRef
@@ -805,7 +805,7 @@ const GalleryComponent = <T extends any>(
                     disableTransitionOnScaledImage,
                     disableVerticalSwipe,
                     onScaleChange,
-                    scaleRange,
+                    onScaleChangeRange,
                     ...eventsCallbacks,
                     ...dimensions,
                   }}
