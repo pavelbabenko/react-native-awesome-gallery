@@ -246,6 +246,17 @@ const ResizableImage = React.memo(
       return clamp(value, -point, point);
     };
 
+    const clampX = (value: number, newScale: number) => {
+      'worklet';
+      const newWidth = newScale * layout.x.value;
+      const point = (newWidth - width) / 2;
+
+      if (newWidth < width) {
+        return 0;
+      }
+      return clamp(value, -point, point);
+    };
+
     const getEdgeY = () => {
       'worklet';
 
@@ -361,7 +372,7 @@ const ResizableImage = React.memo(
             const diffX =
               translation.x.value + offset.x.value - (newWidth - width) / 2;
 
-            if (offset.x.value <= width) {
+            if (newWidth <= width) {
               translation.x.value = withTiming(0);
             } else {
               if (diffX > 0) {
@@ -428,7 +439,11 @@ const ResizableImage = React.memo(
           setAdjustedFocal({ focalX: x, focalY: y });
 
           offset.x.value = withTiming(
-            adjustedFocal.x.value + -1 * doubleTapScale * adjustedFocal.x.value
+            clampX(
+              adjustedFocal.x.value +
+                -1 * doubleTapScale * adjustedFocal.x.value,
+              doubleTapScale
+            )
           );
           offset.y.value = withTiming(
             clampY(
@@ -785,6 +800,7 @@ const GalleryComponent = <T extends any>(
               style={[
                 dimensions,
                 isFirst ? {} : { marginLeft: emptySpaceWidth },
+                { zIndex: index === i ? 1 : 0 },
               ]}
             >
               {Math.abs(i - index) > (numToRender - 1) / 2 ? null : (
