@@ -769,9 +769,8 @@ const GalleryComponent = <T extends any>(
 
   useAnimatedReaction(
     () => currentIndex.value,
-    (newIndex) => {
-      runOnJS(changeIndex)(newIndex);
-    }
+    (newIndex) => runOnJS(changeIndex)(newIndex),
+    [currentIndex]
   );
 
   useImperativeHandle(ref, () => ({
