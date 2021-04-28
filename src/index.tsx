@@ -770,9 +770,7 @@ const GalleryComponent = <T extends any>(
   useAnimatedReaction(
     () => currentIndex.value,
     (newIndex) => {
-      if (newIndex !== initialIndex) {
-        runOnJS(changeIndex)(newIndex);
-      }
+      runOnJS(changeIndex)(newIndex);
     }
   );
 
