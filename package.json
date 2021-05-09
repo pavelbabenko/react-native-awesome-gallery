@@ -76,7 +76,8 @@
     "react": "*",
     "react-native": "*",
     "react-native-gesture-handler": "^1.10.1",
-    "react-native-reanimated": "^2.0.0-rc.3"
+    "react-native-reanimated": "^2.0.0",
+    "react-native-redash": "^16.0.8"
   },
   "jest": {
     "preset": "react-native",
