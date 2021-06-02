@@ -1,7 +1,8 @@
 import Animated, { defineAnimation } from 'react-native-reanimated';
 
 export function withDecaySpring(
-  userConfig: Animated.WithDecayConfig & Animated.WithSpringConfig
+  userConfig: Animated.WithDecayConfig &
+    Animated.WithSpringConfig & { clamp: [number, number] }
 ) {
   'worklet';
 
@@ -105,10 +106,6 @@ export function withDecaySpring(
           }
 
           if (isOvershooting() || (isVelocity && isDisplacement)) {
-            if (config.stiffness !== 0) {
-              animation.current = 0;
-              animation.velocity = toValue;
-            }
             return true;
           }
         }
@@ -128,7 +125,10 @@ export function withDecaySpring(
       animation.current = x;
       animation.velocity = v;
 
-      return Math.abs(v) < VELOCITY_EPS;
+      return (
+        Math.abs(v) < VELOCITY_EPS &&
+        !(nextX < config.clamp[0] || nextX > config.clamp[1])
+      );
     }
 
     function onStart(animation: any, value: number, now: number) {
