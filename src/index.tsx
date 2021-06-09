@@ -124,6 +124,7 @@ type Props<T> = EventsCallbacks & {
   doubleTapScale: number;
   maxScale: number;
   disableTransitionOnScaledImage: boolean;
+  hideAdjacentImagesOnScaledImage: boolean;
   disableVerticalSwipe: boolean;
   onScaleChange?: (scale: number) => void;
   onScaleChangeRange?: { start: number; end: number };
@@ -149,6 +150,7 @@ const ResizableImage = React.memo(
     doubleTapScale,
     maxScale,
     disableTransitionOnScaledImage,
+    hideAdjacentImagesOnScaledImage,
     disableVerticalSwipe,
     length,
     onScaleChange,
@@ -497,15 +499,41 @@ const ResizableImage = React.memo(
               x[1] - offset.x.value
             );
 
-            translateX.value = withRubberBandClamp(
-              ctx.initialTranslateX + translationX - clampedX,
-              0.55,
-              width,
-              disableTransitionOnScaledImage && scale.value > 1
-                ? [getPosition(index), getPosition(index + 1)]
-                : [getPosition(length - 1), 0]
-            );
-            translation.x.value = clampedX;
+            if (
+              hideAdjacentImagesOnScaledImage &&
+              disableTransitionOnScaledImage
+            ) {
+              const disabledTransition =
+                disableTransitionOnScaledImage && scale.value > 1;
+
+              const moveX = withRubberBandClamp(
+                ctx.initialTranslateX + translationX - clampedX,
+                0.55,
+                width,
+                disabledTransition
+                  ? [getPosition(index), getPosition(index + 1)]
+                  : [getPosition(length - 1), 0]
+              );
+
+              if (!disabledTransition) {
+                translateX.value = moveX;
+              }
+              if (disabledTransition) {
+                translation.x.value = clampedX + moveX - translateX.value;
+              } else {
+                translation.x.value = clampedX;
+              }
+            } else {
+              translateX.value = withRubberBandClamp(
+                ctx.initialTranslateX + translationX - clampedX,
+                0.55,
+                width,
+                disableTransitionOnScaledImage && scale.value > 1
+                  ? [getPosition(index), getPosition(index + 1)]
+                  : [getPosition(length - 1), 0]
+              );
+              translation.x.value = clampedX;
+            }
           }
 
           const newHeight = scale.value * layout.y.value;
@@ -718,6 +746,7 @@ type GalleryProps<T> = EventsCallbacks & {
   style?: ViewStyle;
   containerDimensions?: { width: number; height: number };
   disableTransitionOnScaledImage?: boolean;
+  hideAdjacentImagesOnScaledImage?: boolean;
   disableVerticalSwipe?: boolean;
   onScaleChange?: (scale: number) => void;
   onScaleChangeRange?: { start: number; end: number };
@@ -733,6 +762,7 @@ const GalleryComponent = <T extends any>(
     doubleTapScale = DOUBLE_TAP_SCALE,
     maxScale = MAX_SCALE,
     disableTransitionOnScaledImage = false,
+    hideAdjacentImagesOnScaledImage = false,
     onIndexChange,
     style,
     keyExtractor,
@@ -816,6 +846,7 @@ const GalleryComponent = <T extends any>(
                     doubleTapScale,
                     maxScale,
                     disableTransitionOnScaledImage,
+                    hideAdjacentImagesOnScaledImage,
                     disableVerticalSwipe,
                     onScaleChange,
                     onScaleChangeRange,
