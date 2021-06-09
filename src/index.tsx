@@ -340,14 +340,12 @@ const ResizableImage = React.memo(
             ctx.androidPinchActivated = true;
           }
 
-          let nextScale = s * ctx.scaleOffset;
-
-          if (nextScale < 1) {
-            const diff = 1 - nextScale;
-            nextScale = nextScale + diff / 2;
-          } else if (nextScale > maxScale) {
-            nextScale = maxScale;
-          }
+          const nextScale = withRubberBandClamp(
+            s * ctx.scaleOffset,
+            0.55,
+            maxScale,
+            [1, maxScale]
+          );
 
           scale.value = nextScale;
 
@@ -360,7 +358,7 @@ const ResizableImage = React.memo(
             adjustedFocal.y.value +
             ((-1 * nextScale) / ctx.scaleOffset) * origin.y.value;
         },
-        onEnd: () => {
+        onFinish: (_, ctx) => {
           if (!isActive.value) return;
 
           pinchActive.value = false;
@@ -368,44 +366,69 @@ const ResizableImage = React.memo(
           if (scale.value < 1) {
             resetValues();
           } else {
-            const newWidth = scale.value * layout.x.value;
-            const newHeight = scale.value * layout.y.value;
+            const sc = Math.min(scale.value, maxScale);
 
-            const diffX =
-              translation.x.value + offset.x.value - (newWidth - width) / 2;
+            const newWidth = sc * layout.x.value;
+            const newHeight = sc * layout.y.value;
+
+            const nextTransX =
+              scale.value > maxScale
+                ? adjustedFocal.x.value +
+                  ((-1 * maxScale) / ctx.scaleOffset) * origin.x.value
+                : translation.x.value;
+
+            const nextTransY =
+              scale.value > maxScale
+                ? adjustedFocal.y.value +
+                  ((-1 * maxScale) / ctx.scaleOffset) * origin.y.value
+                : translation.y.value;
+
+            const diffX = nextTransX + offset.x.value - (newWidth - width) / 2;
+
+            if (scale.value > maxScale) {
+              scale.value = withTiming(maxScale);
+            }
 
             if (newWidth <= width) {
               translation.x.value = withTiming(0);
             } else {
+              let moved;
               if (diffX > 0) {
-                translation.x.value = withTiming(translation.x.value - diffX);
+                translation.x.value = withTiming(nextTransX - diffX);
+                moved = true;
               }
 
               if (newWidth + diffX < width) {
                 translation.x.value = withTiming(
-                  translation.x.value + width - (newWidth + diffX)
+                  nextTransX + width - (newWidth + diffX)
                 );
+                moved = true;
+              }
+              if (!moved) {
+                translation.x.value = withTiming(nextTransX);
               }
             }
 
             const diffY =
-              translation.y.value + offset.y.value - (newHeight - height) / 2;
+              nextTransY + offset.y.value - (newHeight - height) / 2;
 
-            if (newHeight < height && diffY !== height - diffY - newHeight) {
-              const moveTo = diffY - (height - newHeight) / 2;
-
-              translation.y.value = withTiming(translation.y.value - moveTo);
+            if (newHeight <= height) {
+              translation.y.value = withTiming(-offset.y.value);
             } else {
-              if (newHeight > height) {
-                const edgeY = getEdgeY();
-                const nextTranslation = offset.y.value + translation.y.value;
-                if (nextTranslation > edgeY[1]) {
-                  translation.y.value = withTiming(translation.y.value - diffY);
-                } else if (nextTranslation < edgeY[0]) {
-                  translation.y.value = withTiming(
-                    translation.y.value - (diffY + newHeight - height)
-                  );
-                }
+              let moved;
+              if (diffY > 0) {
+                translation.y.value = withTiming(nextTransY - diffY);
+                moved = true;
+              }
+
+              if (newHeight + diffY < height) {
+                translation.y.value = withTiming(
+                  nextTransY + height - (newHeight + diffY)
+                );
+                moved = true;
+              }
+              if (!moved) {
+                translation.y.value = withTiming(nextTransY);
               }
             }
           }
