@@ -1,6 +1,6 @@
 {
   "name": "react-native-awesome-gallery",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "description": "Awesome gallery with Reanimated v2",
   "main": "lib/commonjs/index",
   "module": "lib/module/index",
