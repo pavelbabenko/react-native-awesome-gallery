@@ -1,5 +1,6 @@
 import React, {
   useCallback,
+  useEffect,
   useImperativeHandle,
   useRef,
   useState,
@@ -434,7 +435,7 @@ const ResizableImage = React.memo(
           }
         },
       },
-      [layout.x, layout.y]
+      [layout.x, layout.y, index, isFirst, isLast]
     );
 
     const singleTapHandler = useAnimatedGestureHandler<
@@ -664,7 +665,7 @@ const ResizableImage = React.memo(
           }
         },
       },
-      [layout.x, layout.y]
+      [layout.x, layout.y, index, isFirst, isLast]
     );
 
     useAnimatedReaction(
@@ -729,6 +730,8 @@ const ResizableImage = React.memo(
                 onGestureEvent={singleTapHandler}
                 simultaneousHandlers={[pan, pinch]}
                 waitFor={tap}
+                maxDeltaX={10}
+                maxDeltaY={10}
               >
                 <Animated.View style={[{ width, height }, animatedStyle]}>
                   <TapGestureHandler
@@ -833,6 +836,16 @@ const GalleryComponent = <T extends any>(
       translateX.value = newIndex * -(dimensions.width + emptySpaceWidth);
     },
   }));
+
+  useEffect(() => {
+    if (index >= data.length) {
+      const newIndex = data.length - 1;
+      setIndex(newIndex);
+      currentIndex.value = newIndex;
+      translateX.value = newIndex * -(dimensions.width + emptySpaceWidth);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data?.length]);
 
   return (
     <View style={[{ flex: 1, backgroundColor: 'black' }, style]}>
