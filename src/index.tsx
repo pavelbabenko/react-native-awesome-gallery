@@ -127,6 +127,7 @@ type Props<T> = EventsCallbacks & {
   disableTransitionOnScaledImage: boolean;
   hideAdjacentImagesOnScaledImage: boolean;
   disableVerticalSwipe: boolean;
+  loop: boolean;
   onScaleChange?: (scale: number) => void;
   onScaleChangeRange?: { start: number; end: number };
 };
@@ -153,6 +154,7 @@ const ResizableImage = React.memo(
     disableTransitionOnScaledImage,
     hideAdjacentImagesOnScaledImage,
     disableVerticalSwipe,
+    loop,
     length,
     onScaleChange,
     onScaleChangeRange,
@@ -548,14 +550,19 @@ const ResizableImage = React.memo(
                 translation.x.value = clampedX;
               }
             } else {
-              translateX.value = withRubberBandClamp(
-                ctx.initialTranslateX + translationX - clampedX,
-                0.55,
-                width,
-                disableTransitionOnScaledImage && scale.value > 1
-                  ? [getPosition(index), getPosition(index + 1)]
-                  : [getPosition(length - 1), 0]
-              );
+              if (loop) {
+                translateX.value =
+                  ctx.initialTranslateX + translationX - clampedX;
+              } else {
+                translateX.value = withRubberBandClamp(
+                  ctx.initialTranslateX + translationX - clampedX,
+                  0.55,
+                  width,
+                  disableTransitionOnScaledImage && scale.value > 1
+                    ? [getPosition(index), getPosition(index + 1)]
+                    : [getPosition(length - 1), 0]
+                );
+              }
               translation.x.value = clampedX;
             }
           }
@@ -596,6 +603,8 @@ const ResizableImage = React.memo(
           ) {
             let snapPoints = [index - 1, index, index + 1]
               .filter((_, y) => {
+                if (loop) return true;
+
                 if (y === 0) {
                   return !isFirst;
                 }
@@ -610,12 +619,26 @@ const ResizableImage = React.memo(
               snapPoints = [getPosition(index)];
             }
 
-            const snapTo = snapPoint(translateX.value, velocityX, snapPoints);
+            let snapTo = snapPoint(translateX.value, velocityX, snapPoints);
 
             const nextIndex = getIndexFromPosition(snapTo);
 
             if (currentIndex.value !== nextIndex) {
-              currentIndex.value = nextIndex;
+              if (loop) {
+                if (nextIndex === length) {
+                  currentIndex.value = 0;
+                  translateX.value = translateX.value - getPosition(length);
+                  snapTo = 0;
+                } else if (nextIndex === -1) {
+                  currentIndex.value = length - 1;
+                  translateX.value = translateX.value + getPosition(length);
+                  snapTo = getPosition(length - 1);
+                } else {
+                  currentIndex.value = nextIndex;
+                }
+              } else {
+                currentIndex.value = nextIndex;
+              }
             }
 
             translateX.value = withSpring(snapTo, {
@@ -665,17 +688,29 @@ const ResizableImage = React.memo(
           }
         },
       },
-      [layout.x, layout.y, index, isFirst, isLast]
+      [layout.x, layout.y, index, isFirst, isLast, loop]
     );
 
     useAnimatedReaction(
       () => {
         return {
           i: currentIndex.value,
+          translateX: translateX.value,
           currentScale: scale.value,
         };
       },
-      ({ i, currentScale }) => {
+      ({ i, translateX, currentScale }) => {
+        const translateIndex = translateX / -(width + emptySpaceWidth);
+        if (loop) {
+          let diff = Math.abs((translateIndex % 1) - 0.5);
+          if (diff > 0.5) {
+            diff = 1 - diff;
+          }
+          if (diff > 0.48 && Math.abs(i) !== index) {
+            resetValues(false);
+            return;
+          }
+        }
         if (Math.abs(i - index) === 2 && currentScale > 1) {
           resetValues(false);
         }
@@ -683,9 +718,21 @@ const ResizableImage = React.memo(
     );
 
     const animatedStyle = useAnimatedStyle(() => {
+      const isNextForLast =
+        isFirst &&
+        currentIndex.value === length - 1 &&
+        translateX.value < getPosition(length - 1);
+      const isPrevForFirst =
+        isLast && currentIndex.value === 0 && translateX.value > getPosition(0);
       return {
         transform: [
-          { translateX: offset.x.value + translation.x.value },
+          {
+            translateX:
+              offset.x.value +
+              translation.x.value -
+              (isNextForLast ? getPosition(length) : 0) +
+              (isPrevForFirst ? getPosition(length) : 0),
+          },
           { translateY: offset.y.value + translation.y.value },
           { scale: scale.value },
         ],
@@ -728,7 +775,6 @@ const ResizableImage = React.memo(
               <TapGestureHandler
                 ref={doubleTap}
                 onGestureEvent={singleTapHandler}
-                simultaneousHandlers={[pan, pinch]}
                 waitFor={tap}
                 maxDeltaX={10}
                 maxDeltaY={10}
@@ -774,6 +820,7 @@ type GalleryProps<T> = EventsCallbacks & {
   disableTransitionOnScaledImage?: boolean;
   hideAdjacentImagesOnScaledImage?: boolean;
   disableVerticalSwipe?: boolean;
+  loop?: boolean;
   onScaleChange?: (scale: number) => void;
   onScaleChangeRange?: { start: number; end: number };
 };
@@ -794,6 +841,7 @@ const GalleryComponent = <T extends any>(
     keyExtractor,
     containerDimensions,
     disableVerticalSwipe,
+    loop = false,
     onScaleChange,
     onScaleChangeRange,
     ...eventsCallbacks
@@ -802,6 +850,8 @@ const GalleryComponent = <T extends any>(
 ) => {
   const windowDimensions = useWindowDimensions();
   const dimensions = containerDimensions || windowDimensions;
+
+  const isLoop = loop && data?.length > 1;
 
   const [index, setIndex] = useState(initialIndex);
 
@@ -853,6 +903,14 @@ const GalleryComponent = <T extends any>(
         {data.map((item: any, i) => {
           const isFirst = i === 0;
 
+          const outOfLoopRenderRange =
+            !isLoop ||
+            (Math.abs(i - index) < data.length - (numToRender - 1) / 2 &&
+              Math.abs(i - index) > (numToRender - 1) / 2);
+
+          const hidden =
+            Math.abs(i - index) > (numToRender - 1) / 2 && outOfLoopRenderRange;
+
           return (
             <View
               key={
@@ -866,7 +924,7 @@ const GalleryComponent = <T extends any>(
                 { zIndex: index === i ? 1 : 0 },
               ]}
             >
-              {Math.abs(i - index) > (numToRender - 1) / 2 ? null : (
+              {hidden ? null : (
                 // @ts-ignore
                 <ResizableImage
                   {...{
@@ -884,6 +942,7 @@ const GalleryComponent = <T extends any>(
                     disableTransitionOnScaledImage,
                     hideAdjacentImagesOnScaledImage,
                     disableVerticalSwipe,
+                    loop: isLoop,
                     onScaleChange,
                     onScaleChangeRange,
                     ...eventsCallbacks,
