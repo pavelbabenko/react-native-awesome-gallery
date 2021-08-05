@@ -719,11 +719,15 @@ const ResizableImage = React.memo(
 
     const animatedStyle = useAnimatedStyle(() => {
       const isNextForLast =
+        loop &&
         isFirst &&
         currentIndex.value === length - 1 &&
         translateX.value < getPosition(length - 1);
       const isPrevForFirst =
-        isLast && currentIndex.value === 0 && translateX.value > getPosition(0);
+        loop &&
+        isLast &&
+        currentIndex.value === 0 &&
+        translateX.value > getPosition(0);
       return {
         transform: [
           {
