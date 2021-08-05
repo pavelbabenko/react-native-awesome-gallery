@@ -554,7 +554,8 @@ const ResizableImage = React.memo(
                 translateX.value =
                   ctx.initialTranslateX + translationX - clampedX;
               } else {
-                if(disableTransitionOnScaledImage && scale.value <= 1 && Math.abs(getPosition(length - 1)) ===0 ) return
+                // if only has one picture, retrun
+                if(Math.abs(getPosition(length - 1)) ===0 )return
                 translateX.value = withRubberBandClamp(
                   ctx.initialTranslateX + translationX - clampedX,
                   0.55,
