@@ -12,6 +12,7 @@ import {
   useWindowDimensions,
   View,
   ViewStyle,
+  I18nManager,
 } from 'react-native';
 import Animated, {
   useAnimatedGestureHandler,
@@ -525,6 +526,10 @@ const ResizableImage = React.memo(
               x[1] - offset.x.value
             );
 
+            const valueX = I18nManager.isRTL
+              ? ctx.initialTranslateX - translationX + clampedX
+              : ctx.initialTranslateX + translationX - clampedX;
+
             if (
               hideAdjacentImagesOnScaledImage &&
               disableTransitionOnScaledImage
@@ -533,7 +538,7 @@ const ResizableImage = React.memo(
                 disableTransitionOnScaledImage && scale.value > 1;
 
               const moveX = withRubberBandClamp(
-                ctx.initialTranslateX + translationX - clampedX,
+                valueX,
                 0.55,
                 width,
                 disabledTransition
@@ -551,11 +556,10 @@ const ResizableImage = React.memo(
               }
             } else {
               if (loop) {
-                translateX.value =
-                  ctx.initialTranslateX + translationX - clampedX;
+                translateX.value = valueX;
               } else {
                 translateX.value = withRubberBandClamp(
-                  ctx.initialTranslateX + translationX - clampedX,
+                  valueX,
                   0.55,
                   width,
                   disableTransitionOnScaledImage && scale.value > 1
@@ -619,7 +623,11 @@ const ResizableImage = React.memo(
               snapPoints = [getPosition(index)];
             }
 
-            let snapTo = snapPoint(translateX.value, velocityX, snapPoints);
+            let snapTo = snapPoint(
+              translateX.value,
+              I18nManager.isRTL ? -velocityX : velocityX,
+              snapPoints
+            );
 
             const nextIndex = getIndexFromPosition(snapTo);
 
@@ -866,7 +874,9 @@ const GalleryComponent = <T extends any>(
   const currentIndex = useSharedValue(initialIndex);
 
   const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: translateX.value }],
+    transform: [
+      { translateX: I18nManager.isRTL ? -translateX.value : translateX.value },
+    ],
   }));
 
   const changeIndex = useCallback(
