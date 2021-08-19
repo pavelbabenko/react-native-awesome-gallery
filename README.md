@@ -1,5 +1,4 @@
 [![npm version](https://badge.fury.io/js/react-native-awesome-gallery.svg)](https://badge.fury.io/js/react-native-awesome-gallery)
-[![Rate on Openbase](https://badges.openbase.com/js/rating/react-native-awesome-gallery.svg)](https://openbase.com/js/react-native-awesome-gallery?utm_source=embedded&utm_medium=badge&utm_campaign=rate-badge)
 
 <p align="center">
   <h1 align="center">React Native Awesome Gallery</h1>
@@ -9,6 +8,16 @@
 <p align="center">
   <img width="200" height="400" src="example-0.0.3.gif" alt="Example usage of gallery">
 </p>
+
+## Supported features
+
+- Zoom to scale
+- Double tap to scale
+- Native iOS feeling (rubber effect, decay animation on pan gesture)
+- Fully customizable
+- Both orientations (portrait + landscape)
+- Infinite list
+- Supports both iOS and Android.
 
 ## Installation
 
@@ -83,9 +92,10 @@ import Gallery, { GalleryRef } from 'react-native-awesome-gallery';
 const ref = useRef<GalleryRef>(null);
 ```
 
-| Prop     | Description       | Type                         |
-| -------- | ----------------- | ---------------------------- |
-| setIndex | Sets active index | `(newIndex: number) => void` |
+| Prop     | Description               | Type                           |
+| -------- | ------------------------- | ------------------------------ |
+| setIndex | Sets active index         | `(newIndex: number) => void`   |
+| reset    | Resets scale, translation | `(animated?: boolean) => void` |
 
 ## Contributing
 
