@@ -131,7 +131,11 @@ type Props<T> = EventsCallbacks & {
   loop: boolean;
   onScaleChange?: (scale: number) => void;
   onScaleChangeRange?: { start: number; end: number };
+
+  setRef: (index: number, value: ItemRef) => void;
 };
+
+type ItemRef = { reset: (animated: boolean) => void };
 
 const ResizableImage = React.memo(
   <T extends any>({
@@ -159,6 +163,7 @@ const ResizableImage = React.memo(
     length,
     onScaleChange,
     onScaleChangeRange,
+    setRef,
   }: Props<T>) => {
     const CENTER = {
       x: width / 2,
@@ -181,6 +186,7 @@ const ResizableImage = React.memo(
 
     const adjustedFocal = useVector(0, 0);
 
+    const originalLayout = useVector(width, 0);
     const layout = useVector(width, 0);
 
     const isActive = useDerivedValue(() => currentIndex.value === index);
@@ -438,7 +444,7 @@ const ResizableImage = React.memo(
           }
         },
       },
-      [layout.x, layout.y, index, isFirst, isLast]
+      [layout.x, layout.y, index, isFirst, isLast, width, height]
     );
 
     const singleTapHandler = useAnimatedGestureHandler<
@@ -602,7 +608,7 @@ const ResizableImage = React.memo(
           const edgeX = getEdgeX();
 
           if (
-            Math.abs(translateX.value - getPosition()) > 0 &&
+            Math.abs(translateX.value - getPosition()) >= 0 &&
             edgeX.some((x) => x === translation.x.value + offset.x.value)
           ) {
             let snapPoints = [index - 1, index, index + 1]
@@ -696,7 +702,7 @@ const ResizableImage = React.memo(
           }
         },
       },
-      [layout.x, layout.y, index, isFirst, isLast, loop]
+      [layout.x, layout.y, index, isFirst, isLast, loop, width, height]
     );
 
     useAnimatedReaction(
@@ -724,6 +730,13 @@ const ResizableImage = React.memo(
         }
       }
     );
+
+    useEffect(() => {
+      setRef(index, {
+        reset: (animated: boolean) => resetValues(animated),
+      });
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [index]);
 
     const animatedStyle = useAnimatedStyle(() => {
       const isNextForLast =
@@ -755,12 +768,33 @@ const ResizableImage = React.memo(
       width: w,
       height: h,
     }) => {
-      const imageHeight = Math.min((h * width) / w, height);
-      layout.y.value = imageHeight;
-      if (imageHeight === height) {
-        layout.x.value = (w * height) / h;
+      originalLayout.x.value = w;
+      originalLayout.y.value = h;
+
+      const portrait = width > height;
+
+      if (portrait) {
+        const imageHeight = Math.min((h * width) / w, height);
+        layout.y.value = imageHeight;
+        if (imageHeight === height) {
+          layout.x.value = (w * height) / h;
+        }
+      } else {
+        const imageWidth = Math.min((w * height) / h, width);
+        layout.x.value = imageWidth;
+        if (imageWidth === width) {
+          layout.y.value = (h * width) / w;
+        }
       }
     };
+
+    useEffect(() => {
+      setImageDimensions({
+        width: originalLayout.x.value,
+        height: originalLayout.y.value,
+      });
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [width, height]);
 
     const itemProps: RenderItemInfo<T> = {
       item,
@@ -811,7 +845,10 @@ const ResizableImage = React.memo(
   }
 );
 
-export type GalleryRef = { setIndex: (newIndex: number) => void };
+export type GalleryRef = {
+  setIndex: (newIndex: number) => void;
+  reset: (animated?: boolean) => void;
+};
 
 export type GalleryReactRef = React.Ref<GalleryRef>;
 
@@ -867,6 +904,12 @@ const GalleryComponent = <T extends any>(
 
   const [index, setIndex] = useState(initialIndex);
 
+  const refs = useRef<ItemRef[]>([]);
+
+  const setRef = useCallback((index: number, value: ItemRef) => {
+    refs.current[index] = value;
+  }, []);
+
   const translateX = useSharedValue(
     initialIndex * -(dimensions.width + emptySpaceWidth)
   );
@@ -893,11 +936,19 @@ const GalleryComponent = <T extends any>(
     [currentIndex]
   );
 
+  useEffect(() => {
+    translateX.value = index * -(dimensions.width + emptySpaceWidth);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [windowDimensions]);
+
   useImperativeHandle(ref, () => ({
     setIndex(newIndex: number) {
       setIndex(newIndex);
       currentIndex.value = newIndex;
       translateX.value = newIndex * -(dimensions.width + emptySpaceWidth);
+    },
+    reset(animated = false) {
+      refs.current?.forEach((itemRef) => itemRef.reset(animated));
     },
   }));
 
@@ -959,6 +1010,7 @@ const GalleryComponent = <T extends any>(
                     loop: isLoop,
                     onScaleChange,
                     onScaleChangeRange,
+                    setRef,
                     ...eventsCallbacks,
                     ...dimensions,
                   }}
