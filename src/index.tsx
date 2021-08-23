@@ -120,7 +120,6 @@ type Props<T> = EventsCallbacks & {
   width: number;
   height: number;
   length: number;
-
   emptySpaceWidth: number;
   doubleTapScale: number;
   maxScale: number;
@@ -130,8 +129,8 @@ type Props<T> = EventsCallbacks & {
   loop: boolean;
   onScaleChange?: (scale: number) => void;
   onScaleChangeRange?: { start: number; end: number };
-
   setRef: (index: number, value: ItemRef) => void;
+  disablePinchToZoom: boolean;
 };
 
 type ItemRef = { reset: (animated: boolean) => void };
@@ -163,6 +162,7 @@ const ResizableImage = React.memo(
     onScaleChange,
     onScaleChangeRange,
     setRef,
+    disablePinchToZoom,
   }: Props<T>) => {
     const CENTER = {
       x: width / 2,
@@ -805,6 +805,7 @@ const ResizableImage = React.memo(
         <Animated.View style={[{ width, height }]}>
           <PinchGestureHandler
             ref={pinch}
+            enabled={!disablePinchToZoom}
             simultaneousHandlers={[pan]}
             onGestureEvent={gestureHandler}
             minPointers={2}
@@ -847,7 +848,6 @@ export type GalleryReactRef = React.Ref<GalleryRef>;
 type GalleryProps<T> = EventsCallbacks & {
   ref?: GalleryReactRef;
   data: T[];
-
   renderItem?: RenderItem<T>;
   keyExtractor?: (item: T, index: number) => string | number;
   initialIndex?: number;
@@ -864,6 +864,7 @@ type GalleryProps<T> = EventsCallbacks & {
   loop?: boolean;
   onScaleChange?: (scale: number) => void;
   onScaleChangeRange?: { start: number; end: number };
+  disablePinchToZoom?: boolean;
 };
 
 const GalleryComponent = <T extends any>(
@@ -885,6 +886,7 @@ const GalleryComponent = <T extends any>(
     loop = false,
     onScaleChange,
     onScaleChangeRange,
+    disablePinchToZoom = false,
     ...eventsCallbacks
   }: GalleryProps<T>,
   ref: GalleryReactRef
@@ -1001,6 +1003,7 @@ const GalleryComponent = <T extends any>(
                     onScaleChange,
                     onScaleChangeRange,
                     setRef,
+                    disablePinchToZoom,
                     ...eventsCallbacks,
                     ...dimensions,
                   }}
