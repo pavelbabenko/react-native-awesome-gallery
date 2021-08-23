@@ -336,6 +336,7 @@ const ResizableImage = React.memo(
           origin.y.value = adjustedFocal.y.value;
         },
         onActive: ({ scale: s, focalX, focalY, numberOfPointers }, ctx) => {
+          if (disablePinchToZoom) return;
           if (!isActive.value) return;
           if (numberOfPointers !== 2 && !isAndroid) return;
           if (panActive.value && !isAndroid) return;
@@ -805,7 +806,6 @@ const ResizableImage = React.memo(
         <Animated.View style={[{ width, height }]}>
           <PinchGestureHandler
             ref={pinch}
-            enabled={!disablePinchToZoom}
             simultaneousHandlers={[pan]}
             onGestureEvent={gestureHandler}
             minPointers={2}
