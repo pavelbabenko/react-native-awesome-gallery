@@ -767,15 +767,21 @@ const ResizableImage = React.memo(
 
       if (portrait) {
         const imageHeight = Math.min((h * width) / w, height);
+        const imageWidth = Math.min(w, width);
         layout.y.value = imageHeight;
         if (imageHeight === height) {
           layout.x.value = (w * height) / h;
+        } else {
+          layout.x.value = imageWidth;
         }
       } else {
         const imageWidth = Math.min((w * height) / h, width);
+        const imageHeight = Math.min(h, height);
         layout.x.value = imageWidth;
         if (imageWidth === width) {
           layout.y.value = (h * width) / w;
+        } else {
+          layout.y.value = imageHeight;
         }
       }
     };
