@@ -124,6 +124,7 @@ type Props<T> = EventsCallbacks & {
   emptySpaceWidth: number;
   doubleTapScale: number;
   maxScale: number;
+  pinchEnabled: boolean;
   disableTransitionOnScaledImage: boolean;
   hideAdjacentImagesOnScaledImage: boolean;
   disableVerticalSwipe: boolean;
@@ -155,6 +156,7 @@ const ResizableImage = React.memo(
     emptySpaceWidth,
     doubleTapScale,
     maxScale,
+    pinchEnabled,
     disableTransitionOnScaledImage,
     hideAdjacentImagesOnScaledImage,
     disableVerticalSwipe,
@@ -313,6 +315,7 @@ const ResizableImage = React.memo(
     >(
       {
         onStart: ({ focalX, focalY }, ctx) => {
+          if (!pinchEnabled) return;
           if (!isActive.value) return;
           if (panActive.value && !isAndroid) return;
 
@@ -336,6 +339,7 @@ const ResizableImage = React.memo(
           origin.y.value = adjustedFocal.y.value;
         },
         onActive: ({ scale: s, focalX, focalY, numberOfPointers }, ctx) => {
+          if (!pinchEnabled) return;
           if (!isActive.value) return;
           if (numberOfPointers !== 2 && !isAndroid) return;
           if (panActive.value && !isAndroid) return;
@@ -368,6 +372,7 @@ const ResizableImage = React.memo(
             ((-1 * nextScale) / ctx.scaleOffset) * origin.y.value;
         },
         onFinish: (_, ctx) => {
+          if (!pinchEnabled) return;
           if (!isActive.value) return;
 
           pinchActive.value = false;
@@ -864,6 +869,7 @@ type GalleryProps<T> = EventsCallbacks & {
   maxScale?: number;
   style?: ViewStyle;
   containerDimensions?: { width: number; height: number };
+  pinchEnabled?: boolean;
   disableTransitionOnScaledImage?: boolean;
   hideAdjacentImagesOnScaledImage?: boolean;
   disableVerticalSwipe?: boolean;
@@ -881,6 +887,7 @@ const GalleryComponent = <T extends any>(
     emptySpaceWidth = SPACE_BETWEEN_IMAGES,
     doubleTapScale = DOUBLE_TAP_SCALE,
     maxScale = MAX_SCALE,
+    pinchEnabled = true,
     disableTransitionOnScaledImage = false,
     hideAdjacentImagesOnScaledImage = false,
     onIndexChange,
@@ -1000,6 +1007,7 @@ const GalleryComponent = <T extends any>(
                     emptySpaceWidth,
                     doubleTapScale,
                     maxScale,
+                    pinchEnabled,
                     disableTransitionOnScaledImage,
                     hideAdjacentImagesOnScaledImage,
                     disableVerticalSwipe,
