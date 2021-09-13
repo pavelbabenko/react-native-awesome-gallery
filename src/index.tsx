@@ -122,6 +122,7 @@ type Props<T> = EventsCallbacks & {
   length: number;
 
   emptySpaceWidth: number;
+  doubleTapInterval: number;
   doubleTapScale: number;
   maxScale: number;
   pinchEnabled: boolean;
@@ -155,6 +156,7 @@ const ResizableImage = React.memo(
     onScaleStart,
     emptySpaceWidth,
     doubleTapScale,
+    doubleTapInterval,
     maxScale,
     pinchEnabled,
     disableTransitionOnScaledImage,
@@ -833,6 +835,7 @@ const ResizableImage = React.memo(
                     ref={tap}
                     onGestureEvent={doubleTapHandler}
                     numberOfTaps={2}
+                    maxDelayMs={doubleTapInterval}
                   >
                     <Animated.View style={{ width, height }}>
                       {renderItem(itemProps)}
@@ -866,6 +869,7 @@ type GalleryProps<T> = EventsCallbacks & {
   numToRender?: number;
   emptySpaceWidth?: number;
   doubleTapScale?: number;
+  doubleTapInterval?: number;
   maxScale?: number;
   style?: ViewStyle;
   containerDimensions?: { width: number; height: number };
@@ -886,6 +890,7 @@ const GalleryComponent = <T extends any>(
     numToRender = 5,
     emptySpaceWidth = SPACE_BETWEEN_IMAGES,
     doubleTapScale = DOUBLE_TAP_SCALE,
+    doubleTapInterval = 500,
     maxScale = MAX_SCALE,
     pinchEnabled = true,
     disableTransitionOnScaledImage = false,
@@ -1006,6 +1011,7 @@ const GalleryComponent = <T extends any>(
                     renderItem,
                     emptySpaceWidth,
                     doubleTapScale,
+                    doubleTapInterval,
                     maxScale,
                     pinchEnabled,
                     disableTransitionOnScaledImage,
