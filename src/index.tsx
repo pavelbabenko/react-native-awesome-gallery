@@ -936,7 +936,7 @@ const GalleryComponent = <T extends any>(
   useAnimatedReaction(
     () => currentIndex.value,
     (newIndex) => runOnJS(changeIndex)(newIndex),
-    [currentIndex]
+    [currentIndex, changeIndex]
   );
 
   useEffect(() => {
