@@ -129,6 +129,7 @@ type Props<T> = EventsCallbacks & {
   disableTransitionOnScaledImage: boolean;
   hideAdjacentImagesOnScaledImage: boolean;
   disableVerticalSwipe: boolean;
+  disableSwipeUp?: boolean;
   loop: boolean;
   onScaleChange?: (scale: number) => void;
   onScaleChangeRange?: { start: number; end: number };
@@ -162,6 +163,7 @@ const ResizableImage = React.memo(
     disableTransitionOnScaledImage,
     hideAdjacentImagesOnScaledImage,
     disableVerticalSwipe,
+    disableSwipeUp,
     loop,
     length,
     onScaleChange,
@@ -592,13 +594,17 @@ const ResizableImage = React.memo(
               [edgeY[0] - offset.y.value, edgeY[1] - offset.y.value]
             );
           } else if (
-            !(scale.value === 1 && translateX.value !== getPosition())
+            !(scale.value === 1 && translateX.value !== getPosition()) &&
+            (!disableSwipeUp || translationY >= 0)
           ) {
             translation.y.value = translationY;
           }
 
           if (ctx.isVertical && newHeight <= height) {
-            ctx.shouldClose = Math.abs(translationY + velocityY * 0.2) > 220;
+            const destY = translationY + velocityY * 0.2;
+            ctx.shouldClose = disableSwipeUp
+              ? destY > 220
+              : Math.abs(destY) > 220;
           }
         },
         onFinish: ({ velocityX, velocityY }, ctx) => {
@@ -877,6 +883,7 @@ type GalleryProps<T> = EventsCallbacks & {
   disableTransitionOnScaledImage?: boolean;
   hideAdjacentImagesOnScaledImage?: boolean;
   disableVerticalSwipe?: boolean;
+  disableSwipeUp?: boolean;
   loop?: boolean;
   onScaleChange?: (scale: number) => void;
   onScaleChangeRange?: { start: number; end: number };
@@ -900,6 +907,7 @@ const GalleryComponent = <T extends any>(
     keyExtractor,
     containerDimensions,
     disableVerticalSwipe,
+    disableSwipeUp = false,
     loop = false,
     onScaleChange,
     onScaleChangeRange,
@@ -1017,6 +1025,7 @@ const GalleryComponent = <T extends any>(
                     disableTransitionOnScaledImage,
                     hideAdjacentImagesOnScaledImage,
                     disableVerticalSwipe,
+                    disableSwipeUp,
                     loop: isLoop,
                     onScaleChange,
                     onScaleChangeRange,
