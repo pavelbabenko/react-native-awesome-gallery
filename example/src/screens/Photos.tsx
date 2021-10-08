@@ -28,11 +28,11 @@ const renderItem = ({
 };
 
 export const Photos = () => {
-  const { setParams, goBack } = useNavigation();
+  const { setParams, goBack, isFocused } = useNavigation();
   const { params } = useRoute<RouteProp<NavParams, 'Photos'>>();
   const onIndexChange = useCallback(
     (index) => {
-      setParams({ index });
+     isFocused() && setParams({ index });
     },
     [setParams]
   );
