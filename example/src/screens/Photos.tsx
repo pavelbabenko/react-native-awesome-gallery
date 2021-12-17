@@ -1,11 +1,11 @@
 import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
+import * as React from 'react';
 import { useCallback } from 'react';
 import { StyleSheet, View } from 'react-native';
 import AwesomeGallery, { RenderItemInfo } from 'react-native-awesome-gallery';
-import * as React from 'react';
-import type { NavParams } from '../navigation/types';
-import { SharedElement } from 'react-navigation-shared-element';
 import FastImage from 'react-native-fast-image';
+import { SharedElement } from 'react-navigation-shared-element';
+import type { NavParams } from '../navigation/types';
 
 const renderItem = ({
   index,
@@ -32,9 +32,9 @@ export const Photos = () => {
   const { params } = useRoute<RouteProp<NavParams, 'Photos'>>();
   const onIndexChange = useCallback(
     (index) => {
-     isFocused() && setParams({ index });
+      isFocused() && setParams({ index });
     },
-    [setParams]
+    [setParams, isFocused]
   );
 
   return (

@@ -13,27 +13,31 @@ import {
   View,
   ViewStyle,
 } from 'react-native';
-import Animated, {
-  useAnimatedGestureHandler,
-  useAnimatedStyle,
-  useDerivedValue,
-  useSharedValue,
-  withTiming,
-  withDecay,
-  useAnimatedReaction,
-  runOnJS,
-  withSpring,
-  cancelAnimation,
-} from 'react-native-reanimated';
 import {
   GestureEvent,
+  HandlerStateChangeEvent,
+  LongPressGestureHandler,
+  LongPressGestureHandlerEventPayload,
   PanGestureHandler,
   PanGestureHandlerEventPayload,
   PinchGestureHandler,
   PinchGestureHandlerEventPayload,
+  State,
   TapGestureHandler,
   TapGestureHandlerEventPayload,
 } from 'react-native-gesture-handler';
+import Animated, {
+  cancelAnimation,
+  runOnJS,
+  useAnimatedGestureHandler,
+  useAnimatedReaction,
+  useAnimatedStyle,
+  useDerivedValue,
+  useSharedValue,
+  withDecay,
+  withSpring,
+  withTiming,
+} from 'react-native-reanimated';
 import { useVector } from 'react-native-redash';
 import { clamp, withDecaySpring, withRubberBandClamp } from './utils';
 
@@ -103,6 +107,7 @@ type EventsCallbacks = {
   onDoubleTap?: () => void;
   onScaleStart?: () => void;
   onPanStart?: () => void;
+  onLongPress?: () => void;
 };
 
 type RenderItem<T> = (
@@ -169,6 +174,7 @@ const ResizableImage = React.memo(
     onScaleChange,
     onScaleChangeRange,
     setRef,
+    onLongPress,
   }: Props<T>) => {
     const CENTER = {
       x: width / 2,
@@ -464,6 +470,14 @@ const ResizableImage = React.memo(
         }
       },
     });
+
+    const longPressGesturehandler = ({
+      nativeEvent,
+    }: HandlerStateChangeEvent<LongPressGestureHandlerEventPayload>) => {
+      if (nativeEvent.state === State.ACTIVE) {
+        onLongPress?.();
+      }
+    };
 
     const doubleTapHandler = useAnimatedGestureHandler<
       GestureEvent<TapGestureHandlerEventPayload>
@@ -829,26 +843,33 @@ const ResizableImage = React.memo(
             minPointers={2}
           >
             <Animated.View style={{ width, height }}>
-              <TapGestureHandler
-                ref={doubleTap}
-                onGestureEvent={singleTapHandler}
-                waitFor={tap}
-                maxDeltaX={10}
-                maxDeltaY={10}
+              <LongPressGestureHandler
+                onHandlerStateChange={longPressGesturehandler}
+                maxDist={0}
               >
-                <Animated.View style={[{ width, height }, animatedStyle]}>
+                <Animated.View style={{ width, height }}>
                   <TapGestureHandler
-                    ref={tap}
-                    onGestureEvent={doubleTapHandler}
-                    numberOfTaps={2}
-                    maxDelayMs={doubleTapInterval}
+                    ref={doubleTap}
+                    onGestureEvent={singleTapHandler}
+                    waitFor={tap}
+                    maxDeltaX={10}
+                    maxDeltaY={10}
                   >
-                    <Animated.View style={{ width, height }}>
-                      {renderItem(itemProps)}
+                    <Animated.View style={[{ width, height }, animatedStyle]}>
+                      <TapGestureHandler
+                        ref={tap}
+                        onGestureEvent={doubleTapHandler}
+                        numberOfTaps={2}
+                        maxDelayMs={doubleTapInterval}
+                      >
+                        <Animated.View style={{ width, height }}>
+                          {renderItem(itemProps)}
+                        </Animated.View>
+                      </TapGestureHandler>
                     </Animated.View>
                   </TapGestureHandler>
                 </Animated.View>
-              </TapGestureHandler>
+              </LongPressGestureHandler>
             </Animated.View>
           </PinchGestureHandler>
         </Animated.View>
