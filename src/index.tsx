@@ -845,7 +845,6 @@ const ResizableImage = React.memo(
             <Animated.View style={{ width, height }}>
               <LongPressGestureHandler
                 onHandlerStateChange={longPressGesturehandler}
-                maxDist={0}
               >
                 <Animated.View style={{ width, height }}>
                   <TapGestureHandler
