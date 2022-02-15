@@ -47,7 +47,8 @@
   },
   "homepage": "https://github.com/Flair-Dev/react-native-awesome-gallery#readme",
   "publishConfig": {
-    "registry": "https://registry.npmjs.org/"
+    "registry": "https://registry.npmjs.org/",
+    "access": "public"
   },
   "dependencies": {
     "react-native-redash": "^16.0.8"
