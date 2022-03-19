@@ -21,6 +21,8 @@
 
 ## Installation
 
+> **_Note:_**  Starting from v0.3.0 using Gesture Handler v2 is required
+
 First you have to follow installation instructions of [Reanimated v2](https://docs.swmansion.com/react-native-reanimated/) and [react-native-gesture-handler](https://docs.swmansion.com/react-native-gesture-handler/)
 
 ```sh
