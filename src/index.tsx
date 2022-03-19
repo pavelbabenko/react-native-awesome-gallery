@@ -7,14 +7,12 @@ import React, {
 } from 'react';
 import {
   Image,
-  Platform,
   StyleSheet,
   useWindowDimensions,
   View,
   ViewStyle,
 } from 'react-native';
 import Animated, {
-  useAnimatedGestureHandler,
   useAnimatedStyle,
   useDerivedValue,
   useSharedValue,
@@ -25,37 +23,13 @@ import Animated, {
   withSpring,
   cancelAnimation,
 } from 'react-native-reanimated';
-import {
-  GestureEvent,
-  PanGestureHandler,
-  PanGestureHandlerEventPayload,
-  PinchGestureHandler,
-  PinchGestureHandlerEventPayload,
-  TapGestureHandler,
-  TapGestureHandlerEventPayload,
-} from 'react-native-gesture-handler';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { useVector } from 'react-native-redash';
 import { clamp, withDecaySpring, withRubberBandClamp } from './utils';
 
 const DOUBLE_TAP_SCALE = 3;
 const MAX_SCALE = 6;
 const SPACE_BETWEEN_IMAGES = 40;
-
-const isAndroid = Platform.OS === 'android';
-
-const useRefs = () => {
-  const pan = useRef();
-  const tap = useRef();
-  const doubleTap = useRef();
-  const pinch = useRef<PinchGestureHandler>();
-
-  return {
-    pan,
-    tap,
-    doubleTap,
-    pinch,
-  };
-};
 
 type Dimensions = {
   height: number;
@@ -175,12 +149,6 @@ const ResizableImage = React.memo(
       y: height / 2,
     };
 
-    const { pinch, tap, doubleTap, pan } = useRefs();
-
-    const pinchActive = useSharedValue(false);
-
-    const panActive = useSharedValue(false);
-
     const offset = useVector(0, 0);
 
     const scale = useSharedValue(1);
@@ -194,7 +162,9 @@ const ResizableImage = React.memo(
     const originalLayout = useVector(width, 0);
     const layout = useVector(width, 0);
 
-    const isActive = useDerivedValue(() => currentIndex.value === index);
+    const isActive = useDerivedValue(() => currentIndex.value === index, [
+      currentIndex,
+    ]);
 
     useAnimatedReaction(
       () => {
@@ -310,406 +280,6 @@ const ResizableImage = React.memo(
       return Math.round(position / -(width + emptySpaceWidth));
     };
 
-    const gestureHandler = useAnimatedGestureHandler<
-      GestureEvent<PinchGestureHandlerEventPayload>,
-      {
-        scaleOffset: number;
-        androidPinchActivated: boolean;
-      }
-    >(
-      {
-        onStart: ({ focalX, focalY }, ctx) => {
-          if (!pinchEnabled) return;
-          if (!isActive.value) return;
-          if (panActive.value && !isAndroid) return;
-
-          pinchActive.value = true;
-
-          if (onScaleStart) {
-            runOnJS(onScaleStart)();
-          }
-
-          if (isAndroid) {
-            ctx.androidPinchActivated = false;
-          }
-
-          onStart();
-
-          ctx.scaleOffset = scale.value;
-
-          setAdjustedFocal({ focalX, focalY });
-
-          origin.x.value = adjustedFocal.x.value;
-          origin.y.value = adjustedFocal.y.value;
-        },
-        onActive: ({ scale: s, focalX, focalY, numberOfPointers }, ctx) => {
-          if (!pinchEnabled) return;
-          if (!isActive.value) return;
-          if (numberOfPointers !== 2 && !isAndroid) return;
-          if (panActive.value && !isAndroid) return;
-
-          if (!ctx.androidPinchActivated && isAndroid) {
-            setAdjustedFocal({ focalX, focalY });
-
-            origin.x.value = adjustedFocal.x.value;
-            origin.y.value = adjustedFocal.y.value;
-
-            ctx.androidPinchActivated = true;
-          }
-
-          const nextScale = withRubberBandClamp(
-            s * ctx.scaleOffset,
-            0.55,
-            maxScale,
-            [1, maxScale]
-          );
-
-          scale.value = nextScale;
-
-          setAdjustedFocal({ focalX, focalY });
-
-          translation.x.value =
-            adjustedFocal.x.value +
-            ((-1 * nextScale) / ctx.scaleOffset) * origin.x.value;
-          translation.y.value =
-            adjustedFocal.y.value +
-            ((-1 * nextScale) / ctx.scaleOffset) * origin.y.value;
-        },
-        onFinish: (_, ctx) => {
-          if (!pinchEnabled) return;
-          if (!isActive.value) return;
-
-          pinchActive.value = false;
-
-          if (scale.value < 1) {
-            resetValues();
-          } else {
-            const sc = Math.min(scale.value, maxScale);
-
-            const newWidth = sc * layout.x.value;
-            const newHeight = sc * layout.y.value;
-
-            const nextTransX =
-              scale.value > maxScale
-                ? adjustedFocal.x.value +
-                  ((-1 * maxScale) / ctx.scaleOffset) * origin.x.value
-                : translation.x.value;
-
-            const nextTransY =
-              scale.value > maxScale
-                ? adjustedFocal.y.value +
-                  ((-1 * maxScale) / ctx.scaleOffset) * origin.y.value
-                : translation.y.value;
-
-            const diffX = nextTransX + offset.x.value - (newWidth - width) / 2;
-
-            if (scale.value > maxScale) {
-              scale.value = withTiming(maxScale);
-            }
-
-            if (newWidth <= width) {
-              translation.x.value = withTiming(0);
-            } else {
-              let moved;
-              if (diffX > 0) {
-                translation.x.value = withTiming(nextTransX - diffX);
-                moved = true;
-              }
-
-              if (newWidth + diffX < width) {
-                translation.x.value = withTiming(
-                  nextTransX + width - (newWidth + diffX)
-                );
-                moved = true;
-              }
-              if (!moved) {
-                translation.x.value = withTiming(nextTransX);
-              }
-            }
-
-            const diffY =
-              nextTransY + offset.y.value - (newHeight - height) / 2;
-
-            if (newHeight <= height) {
-              translation.y.value = withTiming(-offset.y.value);
-            } else {
-              let moved;
-              if (diffY > 0) {
-                translation.y.value = withTiming(nextTransY - diffY);
-                moved = true;
-              }
-
-              if (newHeight + diffY < height) {
-                translation.y.value = withTiming(
-                  nextTransY + height - (newHeight + diffY)
-                );
-                moved = true;
-              }
-              if (!moved) {
-                translation.y.value = withTiming(nextTransY);
-              }
-            }
-          }
-        },
-      },
-      [layout.x, layout.y, index, isFirst, isLast, width, height]
-    );
-
-    const singleTapHandler = useAnimatedGestureHandler<
-      GestureEvent<TapGestureHandlerEventPayload>
-    >({
-      onActive: () => {
-        if (onTap) {
-          runOnJS(onTap)();
-        }
-      },
-    });
-
-    const doubleTapHandler = useAnimatedGestureHandler<
-      GestureEvent<TapGestureHandlerEventPayload>
-    >({
-      onActive: ({ x, y, numberOfPointers }) => {
-        if (!isActive.value) return;
-        if (numberOfPointers !== 1) return;
-
-        if (onDoubleTap) {
-          runOnJS(onDoubleTap)();
-        }
-
-        if (scale.value === 1) {
-          scale.value = withTiming(doubleTapScale);
-
-          setAdjustedFocal({ focalX: x, focalY: y });
-
-          offset.x.value = withTiming(
-            clampX(
-              adjustedFocal.x.value +
-                -1 * doubleTapScale * adjustedFocal.x.value,
-              doubleTapScale
-            )
-          );
-          offset.y.value = withTiming(
-            clampY(
-              adjustedFocal.y.value +
-                -1 * doubleTapScale * adjustedFocal.y.value,
-              doubleTapScale
-            )
-          );
-        } else {
-          resetValues();
-        }
-      },
-    });
-
-    const panHandler = useAnimatedGestureHandler<
-      GestureEvent<PanGestureHandlerEventPayload>,
-      {
-        scaleOffset: number;
-        initialTranslateX: number;
-        isVertical: boolean;
-        shouldClose: boolean;
-      }
-    >(
-      {
-        onStart: ({ velocityY, velocityX }, ctx) => {
-          if (!isActive.value) return;
-          if (pinchActive.value && !isAndroid) return;
-
-          panActive.value = true;
-
-          if (onPanStart) {
-            runOnJS(onPanStart)();
-          }
-
-          onStart();
-          ctx.isVertical = Math.abs(velocityY) > Math.abs(velocityX);
-          ctx.initialTranslateX = translateX.value;
-        },
-        onActive: ({ translationX, translationY, velocityY }, ctx) => {
-          if (!isActive.value) return;
-          if (pinchActive.value && !isAndroid) return;
-          if (disableVerticalSwipe && scale.value === 1 && ctx.isVertical)
-            return;
-
-          const x = getEdgeX();
-
-          if (!ctx.isVertical || scale.value > 1) {
-            const clampedX = clamp(
-              translationX,
-              x[0] - offset.x.value,
-              x[1] - offset.x.value
-            );
-
-            if (
-              hideAdjacentImagesOnScaledImage &&
-              disableTransitionOnScaledImage
-            ) {
-              const disabledTransition =
-                disableTransitionOnScaledImage && scale.value > 1;
-
-              const moveX = withRubberBandClamp(
-                ctx.initialTranslateX + translationX - clampedX,
-                0.55,
-                width,
-                disabledTransition
-                  ? [getPosition(index), getPosition(index + 1)]
-                  : [getPosition(length - 1), 0]
-              );
-
-              if (!disabledTransition) {
-                translateX.value = moveX;
-              }
-              if (disabledTransition) {
-                translation.x.value = clampedX + moveX - translateX.value;
-              } else {
-                translation.x.value = clampedX;
-              }
-            } else {
-              if (loop) {
-                translateX.value =
-                  ctx.initialTranslateX + translationX - clampedX;
-              } else {
-                translateX.value = withRubberBandClamp(
-                  ctx.initialTranslateX + translationX - clampedX,
-                  0.55,
-                  width,
-                  disableTransitionOnScaledImage && scale.value > 1
-                    ? [getPosition(index), getPosition(index + 1)]
-                    : [getPosition(length - 1), 0]
-                );
-              }
-              translation.x.value = clampedX;
-            }
-          }
-
-          const newHeight = scale.value * layout.y.value;
-
-          const edgeY = getEdgeY();
-
-          if (newHeight > height) {
-            translation.y.value = withRubberBandClamp(
-              translationY,
-              0.55,
-              newHeight,
-              [edgeY[0] - offset.y.value, edgeY[1] - offset.y.value]
-            );
-          } else if (
-            !(scale.value === 1 && translateX.value !== getPosition()) &&
-            (!disableSwipeUp || translationY >= 0)
-          ) {
-            translation.y.value = translationY;
-          }
-
-          if (ctx.isVertical && newHeight <= height) {
-            const destY = translationY + velocityY * 0.2;
-            ctx.shouldClose = disableSwipeUp
-              ? destY > 220
-              : Math.abs(destY) > 220;
-          }
-        },
-        onFinish: ({ velocityX, velocityY }, ctx) => {
-          if (!isActive.value) return;
-
-          panActive.value = false;
-
-          const newHeight = scale.value * layout.y.value;
-
-          const edgeX = getEdgeX();
-
-          if (
-            Math.abs(translateX.value - getPosition()) >= 0 &&
-            edgeX.some((x) => x === translation.x.value + offset.x.value)
-          ) {
-            let snapPoints = [index - 1, index, index + 1]
-              .filter((_, y) => {
-                if (loop) return true;
-
-                if (y === 0) {
-                  return !isFirst;
-                }
-                if (y === 2) {
-                  return !isLast;
-                }
-                return true;
-              })
-              .map((i) => getPosition(i));
-
-            if (disableTransitionOnScaledImage && scale.value > 1) {
-              snapPoints = [getPosition(index)];
-            }
-
-            let snapTo = snapPoint(translateX.value, velocityX, snapPoints);
-
-            const nextIndex = getIndexFromPosition(snapTo);
-
-            if (currentIndex.value !== nextIndex) {
-              if (loop) {
-                if (nextIndex === length) {
-                  currentIndex.value = 0;
-                  translateX.value = translateX.value - getPosition(length);
-                  snapTo = 0;
-                } else if (nextIndex === -1) {
-                  currentIndex.value = length - 1;
-                  translateX.value = translateX.value + getPosition(length);
-                  snapTo = getPosition(length - 1);
-                } else {
-                  currentIndex.value = nextIndex;
-                }
-              } else {
-                currentIndex.value = nextIndex;
-              }
-            }
-
-            translateX.value = withSpring(snapTo, {
-              damping: 800,
-              mass: 1,
-              stiffness: 250,
-              restDisplacementThreshold: 0.02,
-              restSpeedThreshold: 4,
-            });
-          } else {
-            const newWidth = scale.value * layout.x.value;
-
-            offset.x.value = withDecaySpring({
-              velocity: velocityX,
-              clamp: [
-                -(newWidth - width) / 2 - translation.x.value,
-                (newWidth - width) / 2 - translation.x.value,
-              ],
-            });
-          }
-
-          if (onSwipeToClose && ctx.shouldClose) {
-            offset.y.value = withDecay({
-              velocity: velocityY,
-            });
-            runOnJS(onSwipeToClose)();
-            return;
-          }
-
-          if (newHeight > height) {
-            offset.y.value = withDecaySpring({
-              velocity: velocityY,
-              clamp: [
-                -(newHeight - height) / 2 - translation.y.value,
-                (newHeight - height) / 2 - translation.y.value,
-              ],
-            });
-          } else {
-            const diffY =
-              translation.y.value + offset.y.value - (newHeight - height) / 2;
-
-            if (newHeight <= height && diffY !== height - diffY - newHeight) {
-              const moveTo = diffY - (height - newHeight) / 2;
-
-              translation.y.value = withTiming(translation.y.value - moveTo);
-            }
-          }
-        },
-      },
-      [layout.x, layout.y, index, isFirst, isLast, loop, width, height]
-    );
-
     useAnimatedReaction(
       () => {
         return {
@@ -813,46 +383,400 @@ const ResizableImage = React.memo(
       setImageDimensions,
     };
 
+    const scaleOffset = useSharedValue(1);
+
+    const pinchGesture = Gesture.Pinch()
+      .enabled(pinchEnabled)
+      .onStart(({ focalX, focalY }) => {
+        'worklet';
+        if (!isActive.value) return;
+        if (onScaleStart) {
+          runOnJS(onScaleStart)();
+        }
+
+        onStart();
+
+        scaleOffset.value = scale.value;
+
+        setAdjustedFocal({ focalX, focalY });
+
+        origin.x.value = adjustedFocal.x.value;
+        origin.y.value = adjustedFocal.y.value;
+      })
+      .onUpdate(({ scale: s, focalX, focalY, numberOfPointers }) => {
+        'worklet';
+        if (!isActive.value) return;
+        if (numberOfPointers !== 2) return;
+
+        const nextScale = withRubberBandClamp(
+          s * scaleOffset.value,
+          0.55,
+          maxScale,
+          [1, maxScale]
+        );
+
+        scale.value = nextScale;
+
+        setAdjustedFocal({ focalX, focalY });
+
+        translation.x.value =
+          adjustedFocal.x.value +
+          ((-1 * nextScale) / scaleOffset.value) * origin.x.value;
+        translation.y.value =
+          adjustedFocal.y.value +
+          ((-1 * nextScale) / scaleOffset.value) * origin.y.value;
+      })
+      .onEnd(() => {
+        'worklet';
+        if (!isActive.value) return;
+        if (scale.value < 1) {
+          resetValues();
+        } else {
+          const sc = Math.min(scale.value, maxScale);
+
+          const newWidth = sc * layout.x.value;
+          const newHeight = sc * layout.y.value;
+
+          const nextTransX =
+            scale.value > maxScale
+              ? adjustedFocal.x.value +
+                ((-1 * maxScale) / scaleOffset.value) * origin.x.value
+              : translation.x.value;
+
+          const nextTransY =
+            scale.value > maxScale
+              ? adjustedFocal.y.value +
+                ((-1 * maxScale) / scaleOffset.value) * origin.y.value
+              : translation.y.value;
+
+          const diffX = nextTransX + offset.x.value - (newWidth - width) / 2;
+
+          if (scale.value > maxScale) {
+            scale.value = withTiming(maxScale);
+          }
+
+          if (newWidth <= width) {
+            translation.x.value = withTiming(0);
+          } else {
+            let moved;
+            if (diffX > 0) {
+              translation.x.value = withTiming(nextTransX - diffX);
+              moved = true;
+            }
+
+            if (newWidth + diffX < width) {
+              translation.x.value = withTiming(
+                nextTransX + width - (newWidth + diffX)
+              );
+              moved = true;
+            }
+            if (!moved) {
+              translation.x.value = withTiming(nextTransX);
+            }
+          }
+
+          const diffY = nextTransY + offset.y.value - (newHeight - height) / 2;
+
+          if (newHeight <= height) {
+            translation.y.value = withTiming(-offset.y.value);
+          } else {
+            let moved;
+            if (diffY > 0) {
+              translation.y.value = withTiming(nextTransY - diffY);
+              moved = true;
+            }
+
+            if (newHeight + diffY < height) {
+              translation.y.value = withTiming(
+                nextTransY + height - (newHeight + diffY)
+              );
+              moved = true;
+            }
+            if (!moved) {
+              translation.y.value = withTiming(nextTransY);
+            }
+          }
+        }
+      });
+
+    const isVertical = useSharedValue(false);
+    const initialTranslateX = useSharedValue(0);
+    const shouldClose = useSharedValue(false);
+
+    const panGesture = Gesture.Pan()
+      .minDistance(0)
+      .maxPointers(1)
+      .onBegin(() => {
+        'worklet';
+        if (!isActive.value) return;
+        const newWidth = scale.value * layout.x.value;
+        const newHeight = scale.value * layout.y.value;
+        if (
+          offset.x.value < (newWidth - width) / 2 - translation.x.value &&
+          offset.x.value > -(newWidth - width) / 2 - translation.x.value
+        ) {
+          cancelAnimation(offset.x);
+        }
+
+        if (
+          offset.y.value < (newHeight - height) / 2 - translation.y.value &&
+          offset.y.value > -(newHeight - height) / 2 - translation.y.value
+        ) {
+          cancelAnimation(offset.y);
+        }
+      })
+      .onStart(({ velocityY, velocityX }) => {
+        'worklet';
+        if (!isActive.value) return;
+
+        if (onPanStart) {
+          runOnJS(onPanStart)();
+        }
+
+        onStart();
+        isVertical.value = Math.abs(velocityY) > Math.abs(velocityX);
+        initialTranslateX.value = translateX.value;
+      })
+      .onUpdate(({ translationX, translationY, velocityY }) => {
+        'worklet';
+        if (!isActive.value) return;
+        if (disableVerticalSwipe && scale.value === 1 && isVertical.value)
+          return;
+
+        const x = getEdgeX();
+
+        if (!isVertical.value || scale.value > 1) {
+          const clampedX = clamp(
+            translationX,
+            x[0] - offset.x.value,
+            x[1] - offset.x.value
+          );
+
+          if (
+            hideAdjacentImagesOnScaledImage &&
+            disableTransitionOnScaledImage
+          ) {
+            const disabledTransition =
+              disableTransitionOnScaledImage && scale.value > 1;
+
+            const moveX = withRubberBandClamp(
+              initialTranslateX.value + translationX - clampedX,
+              0.55,
+              width,
+              disabledTransition
+                ? [getPosition(index), getPosition(index + 1)]
+                : [getPosition(length - 1), 0]
+            );
+
+            if (!disabledTransition) {
+              translateX.value = moveX;
+            }
+            if (disabledTransition) {
+              translation.x.value = clampedX + moveX - translateX.value;
+            } else {
+              translation.x.value = clampedX;
+            }
+          } else {
+            if (loop) {
+              translateX.value =
+                initialTranslateX.value + translationX - clampedX;
+            } else {
+              translateX.value = withRubberBandClamp(
+                initialTranslateX.value + translationX - clampedX,
+                0.55,
+                width,
+                disableTransitionOnScaledImage && scale.value > 1
+                  ? [getPosition(index), getPosition(index + 1)]
+                  : [getPosition(length - 1), 0]
+              );
+            }
+            translation.x.value = clampedX;
+          }
+        }
+
+        const newHeight = scale.value * layout.y.value;
+
+        const edgeY = getEdgeY();
+
+        if (newHeight > height) {
+          translation.y.value = withRubberBandClamp(
+            translationY,
+            0.55,
+            newHeight,
+            [edgeY[0] - offset.y.value, edgeY[1] - offset.y.value]
+          );
+        } else if (
+          !(scale.value === 1 && translateX.value !== getPosition()) &&
+          (!disableSwipeUp || translationY >= 0)
+        ) {
+          translation.y.value = translationY;
+        }
+
+        if (isVertical.value && newHeight <= height) {
+          const destY = translationY + velocityY * 0.2;
+          shouldClose.value = disableSwipeUp
+            ? destY > 220
+            : Math.abs(destY) > 220;
+        }
+      })
+      .onEnd(({ velocityX, velocityY }) => {
+        'worklet';
+        if (!isActive.value) return;
+
+        const newHeight = scale.value * layout.y.value;
+
+        const edgeX = getEdgeX();
+
+        if (
+          Math.abs(translateX.value - getPosition()) >= 0 &&
+          edgeX.some((x) => x === translation.x.value + offset.x.value)
+        ) {
+          let snapPoints = [index - 1, index, index + 1]
+            .filter((_, y) => {
+              if (loop) return true;
+
+              if (y === 0) {
+                return !isFirst;
+              }
+              if (y === 2) {
+                return !isLast;
+              }
+              return true;
+            })
+            .map((i) => getPosition(i));
+
+          if (disableTransitionOnScaledImage && scale.value > 1) {
+            snapPoints = [getPosition(index)];
+          }
+
+          let snapTo = snapPoint(translateX.value, velocityX, snapPoints);
+
+          const nextIndex = getIndexFromPosition(snapTo);
+
+          if (currentIndex.value !== nextIndex) {
+            if (loop) {
+              if (nextIndex === length) {
+                currentIndex.value = 0;
+                translateX.value = translateX.value - getPosition(length);
+                snapTo = 0;
+              } else if (nextIndex === -1) {
+                currentIndex.value = length - 1;
+                translateX.value = translateX.value + getPosition(length);
+                snapTo = getPosition(length - 1);
+              } else {
+                currentIndex.value = nextIndex;
+              }
+            } else {
+              currentIndex.value = nextIndex;
+            }
+          }
+
+          translateX.value = withSpring(snapTo, {
+            damping: 800,
+            mass: 1,
+            stiffness: 250,
+            restDisplacementThreshold: 0.02,
+            restSpeedThreshold: 4,
+          });
+        } else {
+          const newWidth = scale.value * layout.x.value;
+
+          offset.x.value = withDecaySpring({
+            velocity: velocityX,
+            clamp: [
+              -(newWidth - width) / 2 - translation.x.value,
+              (newWidth - width) / 2 - translation.x.value,
+            ],
+          });
+        }
+
+        if (onSwipeToClose && shouldClose.value) {
+          offset.y.value = withDecay({
+            velocity: velocityY,
+          });
+          runOnJS(onSwipeToClose)();
+          return;
+        }
+
+        if (newHeight > height) {
+          offset.y.value = withDecaySpring({
+            velocity: velocityY,
+            clamp: [
+              -(newHeight - height) / 2 - translation.y.value,
+              (newHeight - height) / 2 - translation.y.value,
+            ],
+          });
+        } else {
+          const diffY =
+            translation.y.value + offset.y.value - (newHeight - height) / 2;
+
+          if (newHeight <= height && diffY !== height - diffY - newHeight) {
+            const moveTo = diffY - (height - newHeight) / 2;
+
+            translation.y.value = withTiming(translation.y.value - moveTo);
+          }
+        }
+      });
+
+    const tapGesture = Gesture.Tap()
+      .numberOfTaps(1)
+      .maxDistance(10)
+      .onEnd(() => {
+        'worklet';
+        if (!isActive.value) return;
+        if (onTap) {
+          runOnJS(onTap)();
+        }
+      });
+
+    const doubleTapGesture = Gesture.Tap()
+      .numberOfTaps(2)
+      .maxDelay(doubleTapInterval)
+      .onEnd(({ x, y, numberOfPointers }) => {
+        'worklet';
+        if (!isActive.value) return;
+        if (numberOfPointers !== 1) return;
+        if (onDoubleTap) {
+          runOnJS(onDoubleTap)();
+        }
+
+        if (scale.value === 1) {
+          scale.value = withTiming(doubleTapScale);
+
+          setAdjustedFocal({ focalX: x, focalY: y });
+
+          offset.x.value = withTiming(
+            clampX(
+              adjustedFocal.x.value +
+                -1 * doubleTapScale * adjustedFocal.x.value,
+              doubleTapScale
+            )
+          );
+          offset.y.value = withTiming(
+            clampY(
+              adjustedFocal.y.value +
+                -1 * doubleTapScale * adjustedFocal.y.value,
+              doubleTapScale
+            )
+          );
+        } else {
+          resetValues();
+        }
+      });
+
     return (
-      <PanGestureHandler
-        ref={pan}
-        onGestureEvent={panHandler}
-        minDist={10}
-        minPointers={1}
-        maxPointers={1}
+      <GestureDetector
+        gesture={Gesture.Race(
+          Gesture.Race(panGesture, pinchGesture),
+          Gesture.Exclusive(doubleTapGesture, tapGesture)
+        )}
       >
-        <Animated.View style={[{ width, height }]}>
-          <PinchGestureHandler
-            ref={pinch}
-            simultaneousHandlers={[pan]}
-            onGestureEvent={gestureHandler}
-            minPointers={2}
-          >
-            <Animated.View style={{ width, height }}>
-              <TapGestureHandler
-                ref={doubleTap}
-                onGestureEvent={singleTapHandler}
-                waitFor={tap}
-                maxDeltaX={10}
-                maxDeltaY={10}
-              >
-                <Animated.View style={[{ width, height }, animatedStyle]}>
-                  <TapGestureHandler
-                    ref={tap}
-                    onGestureEvent={doubleTapHandler}
-                    numberOfTaps={2}
-                    maxDelayMs={doubleTapInterval}
-                  >
-                    <Animated.View style={{ width, height }}>
-                      {renderItem(itemProps)}
-                    </Animated.View>
-                  </TapGestureHandler>
-                </Animated.View>
-              </TapGestureHandler>
-            </Animated.View>
-          </PinchGestureHandler>
-        </Animated.View>
-      </PanGestureHandler>
+        <View style={{ width, height }}>
+          <Animated.View style={[{ width, height }, animatedStyle]}>
+            {renderItem(itemProps)}
+          </Animated.View>
+        </View>
+      </GestureDetector>
     );
   }
 );
