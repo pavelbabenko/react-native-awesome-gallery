@@ -32,9 +32,9 @@ export const Photos = () => {
   const { params } = useRoute<RouteProp<NavParams, 'Photos'>>();
   const onIndexChange = useCallback(
     (index) => {
-     isFocused() && setParams({ index });
+      isFocused() && setParams({ index });
     },
-    [setParams]
+    [isFocused, setParams]
   );
 
   return (
