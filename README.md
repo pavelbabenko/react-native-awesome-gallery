@@ -14,6 +14,7 @@
 - Zoom to scale
 - Double tap to scale
 - Native iOS feeling (rubber effect, decay animation on pan gesture)
+- RTL support
 - Fully customizable
 - Both orientations (portrait + landscape)
 - Infinite list

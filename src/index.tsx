@@ -6,6 +6,7 @@ import React, {
   useState,
 } from 'react';
 import {
+  I18nManager,
   Image,
   StyleSheet,
   useWindowDimensions,
@@ -26,6 +27,8 @@ import Animated, {
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { useVector } from 'react-native-redash';
 import { clamp, withDecaySpring, withRubberBandClamp } from './utils';
+
+const rtl = I18nManager.isRTL;
 
 const DOUBLE_TAP_SCALE = 3;
 const MAX_SCALE = 6;
@@ -560,6 +563,10 @@ const ResizableImage = React.memo(
             x[1] - offset.x.value
           );
 
+          const transX = rtl
+            ? initialTranslateX.value - translationX + clampedX
+            : initialTranslateX.value + translationX - clampedX;
+
           if (
             hideAdjacentImagesOnScaledImage &&
             disableTransitionOnScaledImage
@@ -568,7 +575,7 @@ const ResizableImage = React.memo(
               disableTransitionOnScaledImage && scale.value > 1;
 
             const moveX = withRubberBandClamp(
-              initialTranslateX.value + translationX - clampedX,
+              transX,
               0.55,
               width,
               disabledTransition
@@ -580,17 +587,18 @@ const ResizableImage = React.memo(
               translateX.value = moveX;
             }
             if (disabledTransition) {
-              translation.x.value = clampedX + moveX - translateX.value;
+              translation.x.value = rtl
+                ? clampedX - moveX + translateX.value
+                : clampedX + moveX - translateX.value;
             } else {
               translation.x.value = clampedX;
             }
           } else {
             if (loop) {
-              translateX.value =
-                initialTranslateX.value + translationX - clampedX;
+              translateX.value = transX;
             } else {
               translateX.value = withRubberBandClamp(
-                initialTranslateX.value + translationX - clampedX,
+                transX,
                 0.55,
                 width,
                 disableTransitionOnScaledImage && scale.value > 1
@@ -657,7 +665,11 @@ const ResizableImage = React.memo(
             snapPoints = [getPosition(index)];
           }
 
-          let snapTo = snapPoint(translateX.value, velocityX, snapPoints);
+          let snapTo = snapPoint(
+            translateX.value,
+            rtl ? -velocityX : velocityX,
+            snapPoints
+          );
 
           const nextIndex = getIndexFromPosition(snapTo);
 
@@ -914,7 +926,7 @@ const GalleryComponent = <T extends any>(
   const currentIndex = useSharedValue(initialIndex);
 
   const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: translateX.value }],
+    transform: [{ translateX: rtl ? -translateX.value : translateX.value }],
   }));
 
   const changeIndex = useCallback(
