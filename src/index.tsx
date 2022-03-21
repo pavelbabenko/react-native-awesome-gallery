@@ -767,7 +767,7 @@ const ResizableImage = React.memo(
         'worklet';
         if (!isActive.value) return;
         if (numberOfPointers !== 1) return;
-        if (interruptedScroll.value) {
+        if (onTap && interruptedScroll.value) {
           interruptedScroll.value = false;
           if (onTap) {
             runOnJS(onTap)();
