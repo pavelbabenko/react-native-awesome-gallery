@@ -1,8 +1,11 @@
 import Animated, { defineAnimation } from 'react-native-reanimated';
 
+const MIN_VELOCITY = 80;
+
 export function withDecaySpring(
   userConfig: Animated.WithDecayConfig &
-    Animated.WithSpringConfig & { clamp: [number, number] }
+    Animated.WithSpringConfig & { clamp: [number, number] },
+  callback?: () => void
 ) {
   'worklet';
 
@@ -134,13 +137,14 @@ export function withDecaySpring(
     function onStart(animation: any, value: number, now: number) {
       animation.current = value;
       animation.lastTimestamp = now;
-      animation.initialVelocity = config.velocity;
     }
 
     return {
       onFrame: decaySpring,
       onStart,
-      velocity: config.velocity || 0,
+      velocity:
+        Math.abs(config.velocity || 0) > MIN_VELOCITY ? config.velocity : 0,
+      callback,
     };
   });
 }

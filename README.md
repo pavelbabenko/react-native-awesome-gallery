@@ -21,7 +21,7 @@
 
 ## Installation
 
-> **_Note:_**  Starting from v0.3.0 using Gesture Handler v2 is required
+> **_Note:_** Starting from v0.3.0 using Gesture Handler v2 is required
 
 First you have to follow installation instructions of [Reanimated v2](https://docs.swmansion.com/react-native-reanimated/) and [react-native-gesture-handler](https://docs.swmansion.com/react-native-gesture-handler/)
 
@@ -70,7 +70,7 @@ return (
 | disableTransitionOnScaledImage?  | Disables transition to next/previous image when scale > 1                                                                                                                       | `boolean`                                                                                        | `false`                                                                |
 | hideAdjacentImagesOnScaledImage? | Hides next and previous images when scale > 1                                                                                                                                   | `boolean`                                                                                        | `false`                                                                |
 | disableVerticalSwipe?            | Disables vertical swipe when scale == 1                                                                                                                                         | `boolean`                                                                                        | `false`                                                                |
-| disableSwipeUp?                  | Disables swipe up when scale == 1                                                                                                                                         | `boolean`                                                                                        | `false`                                                                |
+| disableSwipeUp?                  | Disables swipe up when scale == 1                                                                                                                                               | `boolean`                                                                                        | `false`                                                                |
 | loop?                            | Allows user to swipe infinitely. Works when `data.length > 1`                                                                                                                   | `boolean`                                                                                        | `false`                                                                |
 | onScaleChange?                   | Is called when scale is changed                                                                                                                                                 | `(scale: number) => void`                                                                        | `undefined`                                                            |
 | onScaleChangeRange?              | Shows range of scale in which `onScaleChange` is called                                                                                                                         | `{start: number, end: number}`                                                                   | `undefined`                                                            |
@@ -79,13 +79,15 @@ return (
 
 ## Events
 
-| Prop           | Description                          | Type       |
-| -------------- | ------------------------------------ | ---------- |
-| onSwipeToClose | Fired when user swiped to top/bottom | `Function` |
-| onTap          | Fired when user tap on image         | `Function` |
-| onDoubleTap    | Fired when user double tap on image  | `Function` |
-| onScaleStart   | Fired when pinch gesture starts      | `Function` |
-| onPanStart     | Fired when pan gesture starts        | `Function` |
+| Prop                      | Description                                                                                                                    | Type       |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------ | ---------- |
+| onSwipeToClose            | Fired when user swiped to top/bottom                                                                                           | `Function` |
+| onTap                     | Fired when user tap on image                                                                                                   | `Function` |
+| onDoubleTap               | Fired when user double tap on image                                                                                            | `Function` |
+| onLongPress               | Fired when long press is detected                                                                                              | `Function` |
+| onScaleStart              | Fired when pinch gesture starts                                                                                                | `Function` |
+| onScaleEnd(scale: number) | Fired when pinch gesture ends. Use case: add haptic feedback when user finished gesture with `scale > maxScale` or `scale < 1` | `Function` |
+| onPanStart                | Fired when pan gesture starts                                                                                                  | `Function` |
 
 ## Methods
 

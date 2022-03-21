@@ -75,7 +75,9 @@ type EventsCallbacks = {
   onSwipeToClose?: () => void;
   onTap?: () => void;
   onDoubleTap?: () => void;
+  onLongPress?: () => void;
   onScaleStart?: () => void;
+  onScaleEnd?: (scale: number) => void;
   onPanStart?: () => void;
 };
 
@@ -127,8 +129,10 @@ const ResizableImage = React.memo(
     onSwipeToClose,
     onTap,
     onDoubleTap,
+    onLongPress,
     onPanStart,
     onScaleStart,
+    onScaleEnd,
     emptySpaceWidth,
     doubleTapScale,
     doubleTapInterval,
@@ -429,6 +433,9 @@ const ResizableImage = React.memo(
       .onEnd(() => {
         'worklet';
         if (!isActive.value) return;
+        if (onScaleEnd) {
+          runOnJS(onScaleEnd)(scale.value);
+        }
         if (scale.value < 1) {
           resetValues();
         } else {
@@ -502,6 +509,7 @@ const ResizableImage = React.memo(
     const isVertical = useSharedValue(false);
     const initialTranslateX = useSharedValue(0);
     const shouldClose = useSharedValue(false);
+    const isMoving = useVector(0);
 
     const panGesture = Gesture.Pan()
       .minDistance(0)
@@ -681,13 +689,20 @@ const ResizableImage = React.memo(
         } else {
           const newWidth = scale.value * layout.x.value;
 
-          offset.x.value = withDecaySpring({
-            velocity: velocityX,
-            clamp: [
-              -(newWidth - width) / 2 - translation.x.value,
-              (newWidth - width) / 2 - translation.x.value,
-            ],
-          });
+          isMoving.x.value = 1;
+          offset.x.value = withDecaySpring(
+            {
+              velocity: velocityX,
+              clamp: [
+                -(newWidth - width) / 2 - translation.x.value,
+                (newWidth - width) / 2 - translation.x.value,
+              ],
+            },
+            () => {
+              'wprklet';
+              isMoving.x.value = 0;
+            }
+          );
         }
 
         if (onSwipeToClose && shouldClose.value) {
@@ -699,13 +714,20 @@ const ResizableImage = React.memo(
         }
 
         if (newHeight > height) {
-          offset.y.value = withDecaySpring({
-            velocity: velocityY,
-            clamp: [
-              -(newHeight - height) / 2 - translation.y.value,
-              (newHeight - height) / 2 - translation.y.value,
-            ],
-          });
+          isMoving.y.value = 1;
+          offset.y.value = withDecaySpring(
+            {
+              velocity: velocityY,
+              clamp: [
+                -(newHeight - height) / 2 - translation.y.value,
+                (newHeight - height) / 2 - translation.y.value,
+              ],
+            },
+            () => {
+              'worklet';
+              isMoving.y.value = 0;
+            }
+          );
         } else {
           const diffY =
             translation.y.value + offset.y.value - (newHeight - height) / 2;
@@ -718,15 +740,24 @@ const ResizableImage = React.memo(
         }
       });
 
+    const interruptedScroll = useSharedValue(false);
+
     const tapGesture = Gesture.Tap()
       .numberOfTaps(1)
       .maxDistance(10)
+      .onBegin(() => {
+        'worklet';
+        if (isMoving.x.value || isMoving.y.value) {
+          interruptedScroll.value = true;
+        }
+      })
       .onEnd(() => {
         'worklet';
         if (!isActive.value) return;
-        if (onTap) {
+        if (onTap && !interruptedScroll.value) {
           runOnJS(onTap)();
         }
+        interruptedScroll.value = false;
       });
 
     const doubleTapGesture = Gesture.Tap()
@@ -736,6 +767,13 @@ const ResizableImage = React.memo(
         'worklet';
         if (!isActive.value) return;
         if (numberOfPointers !== 1) return;
+        if (interruptedScroll.value) {
+          interruptedScroll.value = false;
+          if (onTap) {
+            runOnJS(onTap)();
+          }
+          return;
+        }
         if (onDoubleTap) {
           runOnJS(onDoubleTap)();
         }
@@ -764,10 +802,27 @@ const ResizableImage = React.memo(
         }
       });
 
+    const longPressGesture = Gesture.LongPress()
+      .enabled(!!onLongPress)
+      .maxDistance(10)
+      .onStart(() => {
+        'worklet';
+        if (interruptedScroll.value) {
+          interruptedScroll.value = false;
+          return;
+        }
+        if (onLongPress) {
+          runOnJS(onLongPress)();
+        }
+      });
+
     return (
       <GestureDetector
         gesture={Gesture.Race(
-          Gesture.Race(panGesture, pinchGesture),
+          Gesture.Simultaneous(
+            longPressGesture,
+            Gesture.Race(panGesture, pinchGesture)
+          ),
           Gesture.Exclusive(doubleTapGesture, tapGesture)
         )}
       >
