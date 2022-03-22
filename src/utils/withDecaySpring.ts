@@ -1,10 +1,13 @@
-import Animated, { defineAnimation } from 'react-native-reanimated';
+import { defineAnimation } from 'react-native-reanimated';
+import type {
+  WithDecayConfig,
+  WithSpringConfig,
+} from 'react-native-reanimated';
 
 const MIN_VELOCITY = 80;
 
 export function withDecaySpring(
-  userConfig: Animated.WithDecayConfig &
-    Animated.WithSpringConfig & { clamp: [number, number] },
+  userConfig: WithDecayConfig & WithSpringConfig & { clamp: [number, number] },
   callback?: (edge: { isEdge: boolean }) => void
 ) {
   'worklet';
