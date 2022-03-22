@@ -12,9 +12,9 @@
      <td><h4 align='center'>Loop</h4></td>
   </tr>
   <tr>
-    <td><img width="300" height="600" src="example-basic.gif" alt="Gallery basic usage"></td>
-    <td><img width="300" height="600" src="example-toolbar.gif" alt="Gallery with toolbar"></td>
-    <td><img width="300" height="600" src="example-loop.gif" alt="Gallery loop"></td>
+    <td><img width="240" height="480" src="example-basic.gif" alt="Gallery basic usage"></td>
+    <td><img width="240" height="480" src="example-toolbar.gif" alt="Gallery with toolbar"></td>
+    <td><img width="240" height="480" src="example-loop.gif" alt="Gallery loop"></td>
   </tr>
  </table>
 
