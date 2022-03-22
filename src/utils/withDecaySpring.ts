@@ -5,7 +5,7 @@ const MIN_VELOCITY = 80;
 export function withDecaySpring(
   userConfig: Animated.WithDecayConfig &
     Animated.WithSpringConfig & { clamp: [number, number] },
-  callback?: () => void
+  callback?: (edge: { isEdge: boolean }) => void
 ) {
   'worklet';
 
@@ -121,6 +121,8 @@ export function withDecaySpring(
 
             animation.toValue =
               nextX <= config.clamp[0] ? config.clamp[0] : config.clamp[1];
+
+            callback?.({ isEdge: true });
           }
         }
       }

@@ -1,13 +1,24 @@
 [![npm version](https://badge.fury.io/js/react-native-awesome-gallery.svg)](https://badge.fury.io/js/react-native-awesome-gallery)
 
-<p align="center">
+<div style="text-align: center;">
   <h1 align="center">React Native Awesome Gallery</h1>
   <h3 align="center">Photos gallery powered by Reanimated v2 and react-native-gesture-handler</h3>
-</p>
+</div>
 
-<p align="center">
-  <img width="200" height="400" src="example-0.0.3.gif" alt="Example usage of gallery">
-</p>
+<div style="display: flex; justify-content: center">
+  <div style='display: flex; flex-direction: column; align-items: center'>
+    <h4>Basic usage</h4>
+    <img width="200" height="400" src="example-basic.gif" alt="Gallery basic usage">
+  </div>
+  <div style='display: flex; flex-direction: column; align-items: center'>
+    <h4>With toolbar</h4>
+    <img width="200" height="400" src="example-toolbar.gif" alt="Gallery with toolbar">
+  </div>
+  <div style='display: flex; flex-direction: column; align-items: center'>
+    <h4>Loop</h4>
+    <img width="200" height="400" src="example-loop.gif" alt="Gallery loop">
+  </div>
+</div>
 
 ## Supported features
 

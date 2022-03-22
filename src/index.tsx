@@ -710,9 +710,12 @@ const ResizableImage = React.memo(
                 (newWidth - width) / 2 - translation.x.value,
               ],
             },
-            () => {
+            (edge) => {
               'worklet';
               isMoving.x.value = 0;
+              if (edge.isEdge) {
+                isMoving.y.value = 0;
+              }
             }
           );
         }
@@ -735,9 +738,12 @@ const ResizableImage = React.memo(
                 (newHeight - height) / 2 - translation.y.value,
               ],
             },
-            () => {
+            (edge) => {
               'worklet';
               isMoving.y.value = 0;
+              if (edge.isEdge) {
+                isMoving.x.value = 0;
+              }
             }
           );
         } else {
@@ -755,6 +761,7 @@ const ResizableImage = React.memo(
     const interruptedScroll = useSharedValue(false);
 
     const tapGesture = Gesture.Tap()
+      .enabled(!!onTap)
       .numberOfTaps(1)
       .maxDistance(10)
       .onBegin(() => {
@@ -950,6 +957,7 @@ const GalleryComponent = <T extends any>(
 
   useImperativeHandle(ref, () => ({
     setIndex(newIndex: number) {
+      refs.current?.[index].reset(false);
       setIndex(newIndex);
       currentIndex.value = newIndex;
       translateX.value = newIndex * -(dimensions.width + emptySpaceWidth);
