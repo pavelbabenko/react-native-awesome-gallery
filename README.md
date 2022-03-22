@@ -5,16 +5,16 @@
   <h3 align="center">Photos gallery powered by Reanimated v2 and react-native-gesture-handler</h3>
 </div>
 
-<table>
+<table style='width:100%;'>
   <tr>
     <td><h4 align='center'>Basic usage</h4></td>
      <td><h4 align='center'>With toolbar</h4></td>
      <td><h4 align='center'>Loop</h4></td>
   </tr>
   <tr>
-    <td><img width="200" height="400" src="example-basic.gif" alt="Gallery basic usage"></td>
-    <td><img width="200" height="400" src="example-toolbar.gif" alt="Gallery with toolbar"></td>
-    <td><img width="200" height="400" src="example-loop.gif" alt="Gallery loop"></td>
+    <td><img width="300" height="600" src="example-basic.gif" alt="Gallery basic usage"></td>
+    <td><img width="300" height="600" src="example-toolbar.gif" alt="Gallery with toolbar"></td>
+    <td><img width="300" height="600" src="example-loop.gif" alt="Gallery loop"></td>
   </tr>
  </table>
 
