@@ -5,20 +5,18 @@
   <h3 align="center">Photos gallery powered by Reanimated v2 and react-native-gesture-handler</h3>
 </div>
 
-<div style="display: flex; justify-content: center">
-  <div style='display: flex; flex-direction: column; align-items: center'>
-    <h4>Basic usage</h4>
-    <img width="200" height="400" src="example-basic.gif" alt="Gallery basic usage">
-  </div>
-  <div style='display: flex; flex-direction: column; align-items: center'>
-    <h4>With toolbar</h4>
-    <img width="200" height="400" src="example-toolbar.gif" alt="Gallery with toolbar">
-  </div>
-  <div style='display: flex; flex-direction: column; align-items: center'>
-    <h4>Loop</h4>
-    <img width="200" height="400" src="example-loop.gif" alt="Gallery loop">
-  </div>
-</div>
+<table>
+  <tr>
+    <td><h4 align='center'>Basic usage</h4></td>
+     <td><h4 align='center'>With toolbar</h4></td>
+     <td><h4 align='center'>Loop</h4></td>
+  </tr>
+  <tr>
+    <td><img width="200" height="400" src="example-basic.gif" alt="Gallery basic usage"></td>
+    <td><img width="200" height="400" src="example-toolbar.gif" alt="Gallery with toolbar"></td>
+    <td><img width="200" height="400" src="example-loop.gif" alt="Gallery loop"></td>
+  </tr>
+ </table>
 
 ## Supported features
 
@@ -108,7 +106,7 @@ import Gallery, { GalleryRef } from 'react-native-awesome-gallery';
 
 // ...
 
-const ref = useRef<GalleryRef>(null);
+const ref = useRef < GalleryRef > null;
 ```
 
 | Prop     | Description               | Type                           |
