@@ -711,7 +711,7 @@ const ResizableImage = React.memo(
               ],
             },
             () => {
-              'wprklet';
+              'worklet';
               isMoving.x.value = 0;
             }
           );
