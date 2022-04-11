@@ -106,7 +106,7 @@ import Gallery, { GalleryRef } from 'react-native-awesome-gallery';
 
 // ...
 
-const ref = useRef < GalleryRef > null;
+const ref = useRef<GalleryRef>(null);
 ```
 
 | Prop     | Description               | Type                           |

@@ -515,7 +515,7 @@ const ResizableImage = React.memo(
     const isMoving = useVector(0);
 
     const panGesture = Gesture.Pan()
-      .minDistance(0)
+      .minDistance(10)
       .maxPointers(1)
       .onBegin(() => {
         'worklet';
