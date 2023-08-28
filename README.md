@@ -31,9 +31,9 @@
 
 ## Installation
 
-> **_Note:_** Starting from v0.3.0 using Gesture Handler v2 is required
+> **_Note:_** Starting from v0.3.6 using Reanimated v3 is required
 
-First you have to follow installation instructions of [Reanimated v2](https://docs.swmansion.com/react-native-reanimated/) and [react-native-gesture-handler](https://docs.swmansion.com/react-native-gesture-handler/)
+First you have to follow installation instructions of [Reanimated v3](https://docs.swmansion.com/react-native-reanimated/) and [react-native-gesture-handler](https://docs.swmansion.com/react-native-gesture-handler/)
 
 ```sh
 yarn add react-native-awesome-gallery
@@ -43,7 +43,7 @@ Expo is supported since SDK 40. More information [here](https://docs.expo.io/ver
 
 ## Usage
 
-Check out an [example folder](./example) for example with Shared transition + `FastImage`
+Check out an [example folder](./example) for example with Expo Image
 
 ```js
 import Gallery from 'react-native-awesome-gallery';
@@ -109,10 +109,10 @@ import Gallery, { GalleryRef } from 'react-native-awesome-gallery';
 const ref = useRef<GalleryRef>(null);
 ```
 
-| Prop     | Description               | Type                           |
-| -------- | ------------------------- | ------------------------------ |
-| setIndex | Sets active index         | `(newIndex: number) => void`   |
-| reset    | Resets scale, translation | `(animated?: boolean) => void` |
+| Prop     | Description               | Type                                             |
+| -------- | ------------------------- |--------------------------------------------------|
+| setIndex | Sets active index         | `(newIndex: number, animated?: boolean) => void` |
+| reset    | Resets scale, translation | `(animated?: boolean) => void`                   |
 
 ## Supporting
 

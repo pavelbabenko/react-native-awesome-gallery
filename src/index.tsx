@@ -116,6 +116,14 @@ type Props<T> = EventsCallbacks & {
   setRef: (index: number, value: ItemRef) => void;
 };
 
+const springConfig = {
+  damping: 800,
+  mass: 1,
+  stiffness: 250,
+  restDisplacementThreshold: 0.02,
+  restSpeedThreshold: 4,
+};
+
 type ItemRef = { reset: (animated: boolean) => void };
 
 const ResizableImage = React.memo(
@@ -171,6 +179,7 @@ const ResizableImage = React.memo(
 
     const isActive = useDerivedValue(() => currentIndex.value === index, [
       currentIndex,
+      index,
     ]);
 
     useAnimatedReaction(
@@ -222,7 +231,7 @@ const ResizableImage = React.memo(
 
       const point = (newWidth - width) / 2;
 
-      if (point < 0) {
+      if (point < 0 || isNaN(point)) {
         return [-0, 0];
       }
 
@@ -257,6 +266,10 @@ const ResizableImage = React.memo(
       const newHeight = scale.value * layout.y.value;
 
       const point = (newHeight - height) / 2;
+
+      if (isNaN(point)) {
+        return [-0, 0];
+      }
 
       return [-point, point];
     };
@@ -295,8 +308,8 @@ const ResizableImage = React.memo(
           currentScale: scale.value,
         };
       },
-      ({ i, translateX, currentScale }) => {
-        const translateIndex = translateX / -(width + emptySpaceWidth);
+      ({ i, translateX: tx, currentScale }) => {
+        const translateIndex = tx / -(width + emptySpaceWidth);
         if (loop) {
           let diff = Math.abs((translateIndex % 1) - 0.5);
           if (diff > 0.5) {
@@ -691,13 +704,7 @@ const ResizableImage = React.memo(
             }
           }
 
-          translateX.value = withSpring(snapTo, {
-            damping: 800,
-            mass: 1,
-            stiffness: 250,
-            restDisplacementThreshold: 0.02,
-            restSpeedThreshold: 4,
-          });
+          translateX.value = withSpring(snapTo, springConfig);
         } else {
           const newWidth = scale.value * layout.x.value;
 
@@ -856,7 +863,7 @@ const ResizableImage = React.memo(
 );
 
 export type GalleryRef = {
-  setIndex: (newIndex: number) => void;
+  setIndex: (newIndex: number, animated?: boolean) => void;
   reset: (animated?: boolean) => void;
 };
 
@@ -922,8 +929,8 @@ const GalleryComponent = <T extends any>(
 
   const refs = useRef<ItemRef[]>([]);
 
-  const setRef = useCallback((index: number, value: ItemRef) => {
-    refs.current[index] = value;
+  const setRef = useCallback((itemIndex: number, value: ItemRef) => {
+    refs.current[itemIndex] = value;
   }, []);
 
   const translateX = useSharedValue(
@@ -953,14 +960,21 @@ const GalleryComponent = <T extends any>(
   useEffect(() => {
     translateX.value = index * -(dimensions.width + emptySpaceWidth);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [windowDimensions]);
+  }, [dimensions.width]);
 
   useImperativeHandle(ref, () => ({
-    setIndex(newIndex: number) {
+    setIndex(newIndex: number, animated?: boolean) {
       refs.current?.[index].reset(false);
       setIndex(newIndex);
       currentIndex.value = newIndex;
-      translateX.value = withTiming(newIndex * -(dimensions.width + emptySpaceWidth));
+      if (animated) {
+        translateX.value = withSpring(
+          newIndex * -(dimensions.width + emptySpaceWidth),
+          springConfig
+        );
+      } else {
+        translateX.value = newIndex * -(dimensions.width + emptySpaceWidth);
+      }
     },
     reset(animated = false) {
       refs.current?.forEach((itemRef) => itemRef.reset(animated));
@@ -975,11 +989,11 @@ const GalleryComponent = <T extends any>(
       translateX.value = newIndex * -(dimensions.width + emptySpaceWidth);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [data?.length]);
+  }, [data?.length, dimensions.width]);
 
   return (
-    <View style={[{ flex: 1, backgroundColor: 'black' }, style]}>
-      <Animated.View style={[{ flex: 1, flexDirection: 'row' }, animatedStyle]}>
+    <View style={[styles.container, style]}>
+      <Animated.View style={[styles.rowContainer, animatedStyle]}>
         {data.map((item: any, i) => {
           const isFirst = i === 0;
 
@@ -1001,7 +1015,7 @@ const GalleryComponent = <T extends any>(
               style={[
                 dimensions,
                 isFirst ? {} : { marginLeft: emptySpaceWidth },
-                { zIndex: index === i ? 1 : 0 },
+                index === i ? styles.activeItem : styles.inactiveItem,
               ]}
             >
               {hidden ? null : (
@@ -1045,5 +1059,12 @@ const GalleryComponent = <T extends any>(
 const Gallery = React.forwardRef(GalleryComponent) as <T extends any>(
   p: GalleryProps<T> & { ref?: GalleryReactRef }
 ) => React.ReactElement;
+
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: 'black' },
+  rowContainer: { flex: 1, flexDirection: 'row' },
+  activeItem: { zIndex: 1 },
+  inactiveItem: { zIndex: 0 },
+});
 
 export default Gallery;

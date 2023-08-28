@@ -3,6 +3,7 @@ import {
   useNavigation,
   useRoute,
   useIsFocused,
+  NavigationProp,
 } from '@react-navigation/native';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
@@ -18,8 +19,7 @@ import AwesomeGallery, {
 } from 'react-native-awesome-gallery';
 import * as React from 'react';
 import type { NavParams } from '../navigation/types';
-import { SharedElement } from 'react-navigation-shared-element';
-import FastImage from 'react-native-fast-image';
+import { Image } from 'expo-image';
 import Animated, {
   FadeInDown,
   FadeInUp,
@@ -29,28 +29,27 @@ import Animated, {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const renderItem = ({
-  index,
   item,
   setImageDimensions,
 }: RenderItemInfo<{ uri: string }>) => {
   return (
-    <SharedElement id={`${index}`} style={StyleSheet.absoluteFillObject}>
-      <FastImage
-        source={{ uri: item.uri }}
-        style={StyleSheet.absoluteFillObject}
-        resizeMode={FastImage.resizeMode.contain}
-        onLoad={(e) => {
-          const { width, height } = e.nativeEvent;
-          setImageDimensions({ width, height });
-        }}
-      />
-    </SharedElement>
+    <Image
+      source={item.uri}
+      style={StyleSheet.absoluteFillObject}
+      contentFit="contain"
+      onLoad={(e) => {
+        const { width, height } = e.source;
+        setImageDimensions({ width, height });
+      }}
+    />
   );
 };
 
 export const Photos = () => {
   const { top, bottom } = useSafeAreaInsets();
-  const { setParams, goBack } = useNavigation();
+  const { setParams, goBack } = useNavigation<
+    NavigationProp<NavParams, 'Photos'>
+  >();
   const isFocused = useIsFocused();
   const { params } = useRoute<RouteProp<NavParams, 'Photos'>>();
   const gallery = useRef<GalleryRef>(null);
@@ -70,7 +69,7 @@ export const Photos = () => {
   }, [isFocused]);
 
   const onIndexChange = useCallback(
-    (index) => {
+    (index: number) => {
       isFocused && setParams({ index });
     },
     [isFocused, setParams]
@@ -96,7 +95,7 @@ export const Photos = () => {
           ]}
         >
           <View style={styles.textContainer}>
-            <Text style={{ fontSize: 16, color: 'white', fontWeight: '600' }}>
+            <Text style={styles.headerText}>
               {params.index + 1} of {params.images.length}
             </Text>
           </View>
@@ -126,8 +125,8 @@ export const Photos = () => {
           exiting={FadeOutDown.duration(250)}
           style={[
             styles.toolbar,
+            styles.bottomToolBar,
             {
-              bottom: 0,
               height: bottom + 100,
               paddingBottom: bottom,
             },
@@ -152,7 +151,8 @@ export const Photos = () => {
                 gallery.current?.setIndex(
                   params.index === params.images.length - 1
                     ? 0
-                    : params.index + 1
+                    : params.index + 1,
+                  true
                 )
               }
             >
@@ -189,5 +189,13 @@ const styles = StyleSheet.create({
     width: '100%',
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
     zIndex: 1,
+  },
+  bottomToolBar: {
+    bottom: 0,
+  },
+  headerText: {
+    fontSize: 16,
+    color: 'white',
+    fontWeight: '600',
   },
 });

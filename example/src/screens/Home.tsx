@@ -6,15 +6,14 @@ import {
   TouchableWithoutFeedback,
   View,
 } from 'react-native';
-import { SharedElement } from 'react-navigation-shared-element';
-import FastImage from 'react-native-fast-image';
+import { Image } from 'expo-image';
 import type { NavParams } from '../navigation/types';
 
 const { height } = Dimensions.get('window');
 
 const getRandomSize = function () {
-  const min = 1000;
-  const max = 2000;
+  const min = 400;
+  const max = 800;
   return Math.floor(Math.random() * (max - min + 1)) + min;
 };
 
@@ -32,9 +31,7 @@ export const Home = () => {
           key={uri}
           onPress={() => navigate('Photos', { index, images })}
         >
-          <SharedElement id={`${index}`} style={styles.imageContainer}>
-            <FastImage source={{ uri }} style={StyleSheet.absoluteFillObject} />
-          </SharedElement>
+          <Image source={uri} style={styles.image} />
         </TouchableWithoutFeedback>
       ))}
     </View>
@@ -47,7 +44,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
   },
-  imageContainer: {
+  image: {
     width: '50%',
     height: (height / images.length) * 2,
   },

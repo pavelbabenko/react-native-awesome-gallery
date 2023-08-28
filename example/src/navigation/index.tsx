@@ -1,12 +1,11 @@
 import * as React from 'react';
-import { Platform } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
-import { createSharedElementStackNavigator } from 'react-navigation-shared-element';
+import { createStackNavigator } from '@react-navigation/stack';
 import type { NavParams } from './types';
 import { Home } from '../screens/Home';
 import { Photos } from '../screens/Photos';
 
-const Stack = createSharedElementStackNavigator<NavParams>();
+const Stack = createStackNavigator<NavParams>();
 
 export const Navigator = () => {
   return (
@@ -23,13 +22,6 @@ export const Navigator = () => {
               },
             }),
             gestureEnabled: false,
-          }}
-          sharedElements={(route, _, showing) => {
-            const { index } = route.params;
-            if (Platform.OS !== 'ios' && !showing) {
-              return [];
-            }
-            return [`${index}`];
           }}
         />
       </Stack.Navigator>
