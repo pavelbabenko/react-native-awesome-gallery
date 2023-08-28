@@ -960,7 +960,7 @@ const GalleryComponent = <T extends any>(
       refs.current?.[index].reset(false);
       setIndex(newIndex);
       currentIndex.value = newIndex;
-      translateX.value = newIndex * -(dimensions.width + emptySpaceWidth);
+      translateX.value = withTiming(newIndex * -(dimensions.width + emptySpaceWidth));
     },
     reset(animated = false) {
       refs.current?.forEach((itemRef) => itemRef.reset(animated));
