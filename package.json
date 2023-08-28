@@ -38,14 +38,14 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Flair-Dev/react-native-awesome-gallery.git"
+    "url": "git+https://github.com/pavelbabenko/react-native-awesome-gallery.git"
   },
   "author": "pavelbabenko <pavelbabenko01@gmail.com> (https://github.com/pavelbabenko)",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/Flair-Dev/react-native-awesome-gallery/issues"
+    "url": "https://github.com/pavelbabenko/react-native-awesome-gallery/issues"
   },
-  "homepage": "https://github.com/Flair-Dev/react-native-awesome-gallery#readme",
+  "homepage": "https://github.com/pavelbabenko/react-native-awesome-gallery#readme",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/"
   },
