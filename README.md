@@ -1,4 +1,9 @@
 [![npm version](https://badge.fury.io/js/react-native-awesome-gallery.svg)](https://badge.fury.io/js/react-native-awesome-gallery)
+## Support
+
+If you love using React Native Awesome Gallery and would like to show your appreciation, you can support the project by buying me a coffee. Your support helps me keep the project alive and continuously improving. Every little bit counts!
+
+[!["Buy Me A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/pavelbabenko)
 
 <div style="text-align: center;">
   <h1 align="center">React Native Awesome Gallery</h1>
@@ -113,12 +118,6 @@ const ref = useRef<GalleryRef>(null);
 | -------- | ------------------------- |--------------------------------------------------|
 | setIndex | Sets active index         | `(newIndex: number, animated?: boolean) => void` |
 | reset    | Resets scale, translation | `(animated?: boolean) => void`                   |
-
-## Supporting
-
-If you want to support the library, you can buy me a coffee.
-
-[!["Buy Me A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/pavelbabenko)
 
 ## License
 
