@@ -10,16 +10,16 @@ If you love using React Native Awesome Gallery and would like to show your appre
   <h3 align="center">Photos gallery powered by Reanimated v2 and react-native-gesture-handler</h3>
 </div>
 
-<table style='width:100%; overflow: hidden'>
+<table style='width:100%;'>
   <tr>
     <td><h4 align='center'>Basic usage</h4></td>
      <td><h4 align='center'>With toolbar</h4></td>
      <td><h4 align='center'>Loop</h4></td>
   </tr>
   <tr>
-    <td><img width="240" height="480" src="example-basic.gif" alt="Gallery basic usage"></td>
-    <td><img width="240" height="480" src="example-toolbar.gif" alt="Gallery with toolbar"></td>
-    <td><img width="240" height="480" src="example-loop.gif" alt="Gallery loop"></td>
+    <td><img width="100%" height="480" src="example-basic.gif" alt="Gallery basic usage"></td>
+    <td><img width="100%" height="480" src="example-toolbar.gif" alt="Gallery with toolbar"></td>
+    <td><img width="100%" height="480" src="example-loop.gif" alt="Gallery loop"></td>
   </tr>
  </table>
 
