@@ -10,7 +10,7 @@ If you love using React Native Awesome Gallery and would like to show your appre
   <h3 align="center">Photos gallery powered by Reanimated v2 and react-native-gesture-handler</h3>
 </div>
 
-<table style='width:100%;'>
+<table style='width:100%; overflow: hidden'>
   <tr>
     <td><h4 align='center'>Basic usage</h4></td>
      <td><h4 align='center'>With toolbar</h4></td>
