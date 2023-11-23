@@ -125,7 +125,7 @@ export function withDecaySpring(
             animation.toValue =
               nextX <= config.clamp[0] ? config.clamp[0] : config.clamp[1];
 
-            callback?.({ isEdge: true });
+            v = v / 3;
           }
         }
       }

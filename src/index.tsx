@@ -210,7 +210,6 @@ const ResizableImage = React.memo(
       focalY,
     }: Record<'focalX' | 'focalY', number>) => {
       'worklet';
-
       adjustedFocal.x.value = focalX - (CENTER.x + offset.x.value);
       adjustedFocal.y.value = focalY - (CENTER.y + offset.y.value);
     };
@@ -536,6 +535,7 @@ const ResizableImage = React.memo(
         const newWidth = scale.value * layout.x.value;
         const newHeight = scale.value * layout.y.value;
         if (
+          isMoving.x.value &&
           offset.x.value < (newWidth - width) / 2 - translation.x.value &&
           offset.x.value > -(newWidth - width) / 2 - translation.x.value
         ) {
@@ -543,6 +543,7 @@ const ResizableImage = React.memo(
         }
 
         if (
+          isMoving.y.value &&
           offset.y.value < (newHeight - height) / 2 - translation.y.value &&
           offset.y.value > -(newHeight - height) / 2 - translation.y.value
         ) {
@@ -717,12 +718,9 @@ const ResizableImage = React.memo(
                 (newWidth - width) / 2 - translation.x.value,
               ],
             },
-            (edge) => {
+            () => {
               'worklet';
               isMoving.x.value = 0;
-              if (edge.isEdge) {
-                isMoving.y.value = 0;
-              }
             }
           );
         }
@@ -745,12 +743,9 @@ const ResizableImage = React.memo(
                 (newHeight - height) / 2 - translation.y.value,
               ],
             },
-            (edge) => {
+            () => {
               'worklet';
               isMoving.y.value = 0;
-              if (edge.isEdge) {
-                isMoving.x.value = 0;
-              }
             }
           );
         } else {
