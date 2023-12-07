@@ -782,6 +782,7 @@ const ResizableImage = React.memo(
       });
 
     const doubleTapGesture = Gesture.Tap()
+      .enabled(pinchEnabled)
       .numberOfTaps(2)
       .maxDelay(doubleTapInterval)
       .onEnd(({ x, y, numberOfPointers }) => {
