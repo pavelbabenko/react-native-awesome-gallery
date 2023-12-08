@@ -112,7 +112,6 @@ export const Photos = () => {
         onIndexChange={onIndexChange}
         onSwipeToClose={goBack}
         onTap={onTap}
-        pinchEnabled={true}
         loop
         onScaleEnd={(scale) => {
           if (scale < 0.8) {
