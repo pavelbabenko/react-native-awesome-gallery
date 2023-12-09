@@ -1,4 +1,5 @@
 [![npm version](https://badge.fury.io/js/react-native-awesome-gallery.svg)](https://badge.fury.io/js/react-native-awesome-gallery)
+
 ## Support
 
 If you love using React Native Awesome Gallery and would like to show your appreciation, you can support the project by buying me a coffee. Your support helps me keep the project alive and continuously improving. Every little bit counts!
@@ -70,7 +71,7 @@ return (
 ## Props
 
 | Prop                             | Description                                                                                                                                                                     | Type                                                                                             | Default                                                                |
-| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------- |
+|----------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------|------------------------------------------------------------------------|
 | data                             | Array of items to render                                                                                                                                                        | `T[]`                                                                                            | `undefined`                                                            |
 | renderItem?                      | Callback func which can be used to render custom image component, e.g `FastImage`. NOTE: You have to call `setImageDimensions({width, height})` parameter after image is loaded | `(renderItemInfo: {item: T, index: number, setImageDimensions: Function}) => React.ReactElement` | `undefined`                                                            |
 | keyExtractor?                    | Callback func which provides unique keys for items                                                                                                                              | `(item: T, index: number) => string or number`                                                   | Takes `id` or `key` or `_id` from `Item`, otherwise puts `Item` as key |
@@ -82,6 +83,7 @@ return (
 | doubleTapInterval?               | Time in milliseconds between single and double tap events                                                                                                                       | `number`                                                                                         | `500`                                                                  |
 | maxScale?                        | Maximum scale user can set with gesture                                                                                                                                         | `number`                                                                                         | `6`                                                                    |
 | pinchEnabled?                    | Is pinch gesture enabled                                                                                                                                                        | `boolean`                                                                                        | `true`                                                                 |
+| doubleTapEnabled?                | Is double tap enabled                                                                                                                                                           | `boolean`                                                                                        | `true`                                                                 |
 | disableTransitionOnScaledImage?  | Disables transition to next/previous image when scale > 1                                                                                                                       | `boolean`                                                                                        | `false`                                                                |
 | hideAdjacentImagesOnScaledImage? | Hides next and previous images when scale > 1                                                                                                                                   | `boolean`                                                                                        | `false`                                                                |
 | disableVerticalSwipe?            | Disables vertical swipe when scale == 1                                                                                                                                         | `boolean`                                                                                        | `false`                                                                |
@@ -95,7 +97,7 @@ return (
 ## Events
 
 | Prop                      | Description                                                                                                                    | Type       |
-| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------ | ---------- |
+|---------------------------|--------------------------------------------------------------------------------------------------------------------------------|------------|
 | onSwipeToClose            | Fired when user swiped to top/bottom                                                                                           | `Function` |
 | onTap                     | Fired when user tap on image                                                                                                   | `Function` |
 | onDoubleTap               | Fired when user double tap on image                                                                                            | `Function` |
@@ -115,7 +117,7 @@ const ref = useRef<GalleryRef>(null);
 ```
 
 | Prop     | Description               | Type                                             |
-| -------- | ------------------------- |--------------------------------------------------|
+|----------|---------------------------|--------------------------------------------------|
 | setIndex | Sets active index         | `(newIndex: number, animated?: boolean) => void` |
 | reset    | Resets scale, translation | `(animated?: boolean) => void`                   |
 
