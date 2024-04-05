@@ -126,7 +126,8 @@
           "trailingComma": "es5",
           "useTabs": false
         }
-      ]
+      ],
+      "eslint-comments/no-unlimited-disable": "off"
     }
   },
   "eslintIgnore": [
