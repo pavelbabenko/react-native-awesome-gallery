@@ -26,8 +26,12 @@ import Animated, {
 } from 'react-native-reanimated';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { useVector } from 'react-native-redash';
-import { clamp, withDecaySpring, withRubberBandClamp } from './utils';
-import { resizeImage } from './utils/image';
+import {
+  clamp,
+  withDecaySpring,
+  withRubberBandClamp,
+  resizeImage,
+} from './utils';
 
 const rtl = I18nManager.isRTL;
 
