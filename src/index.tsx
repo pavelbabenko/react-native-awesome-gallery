@@ -26,7 +26,12 @@ import Animated, {
 } from 'react-native-reanimated';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { useVector } from 'react-native-redash';
-import { clamp, withDecaySpring, withRubberBandClamp } from './utils';
+import {
+  clamp,
+  withDecaySpring,
+  withRubberBandClamp,
+  resizeImage,
+} from './utils';
 
 const rtl = I18nManager.isRTL;
 
@@ -367,30 +372,15 @@ const ResizableImage = React.memo(
       originalLayout.x.value = w;
       originalLayout.y.value = h;
 
-      const portrait = width > height;
-
-      if (portrait) {
-        const imageHeight = Math.min((h * width) / w, height);
-        const imageWidth = Math.min(w, width);
-        layout.y.value = imageHeight;
-        if (imageHeight === height) {
-          layout.x.value = (w * height) / h;
-        } else {
-          layout.x.value = imageWidth;
-        }
-      } else {
-        const imageWidth = Math.min((w * height) / h, width);
-        const imageHeight = Math.min(h, height);
-        layout.x.value = imageWidth;
-        if (imageWidth === width) {
-          layout.y.value = (h * width) / w;
-        } else {
-          layout.y.value = imageHeight;
-        }
-      }
+      const imgLayout = resizeImage({ width: w, height: h }, { width, height });
+      layout.x.value = imgLayout.width;
+      layout.y.value = imgLayout.height;
     };
 
     useEffect(() => {
+      if (originalLayout.x.value === 0 && originalLayout.y.value === 0) {
+        return;
+      }
       setImageDimensions({
         width: originalLayout.x.value,
         height: originalLayout.y.value,
