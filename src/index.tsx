@@ -24,7 +24,11 @@ import Animated, {
   withSpring,
   cancelAnimation,
 } from 'react-native-reanimated';
-import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import {
+  Gesture,
+  GestureDetector,
+  GestureHandlerRootView,
+} from 'react-native-gesture-handler';
 import { useVector } from 'react-native-redash';
 import {
   clamp,
@@ -982,7 +986,7 @@ const GalleryComponent = <T extends any>(
   }, [data?.length, dimensions.width]);
 
   return (
-    <View style={[styles.container, style]}>
+    <GestureHandlerRootView style={[styles.container, style]}>
       <Animated.View style={[styles.rowContainer, animatedStyle]}>
         {data.map((item: any, i) => {
           const isFirst = i === 0;
@@ -1043,7 +1047,7 @@ const GalleryComponent = <T extends any>(
           );
         })}
       </Animated.View>
-    </View>
+    </GestureHandlerRootView>
   );
 };
 
