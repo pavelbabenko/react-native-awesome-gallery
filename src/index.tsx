@@ -10,7 +10,6 @@ import {
   Image,
   StyleSheet,
   useWindowDimensions,
-  View,
   ViewStyle,
 } from 'react-native';
 import Animated, {
@@ -355,9 +354,11 @@ const ResizableImage = React.memo(
         currentIndex.value === 0 &&
         translateX.value > getPosition(0);
       return {
+        zIndex: index === currentIndex.value ? 1 : 0,
         transform: [
           {
             translateX:
+              (width + emptySpaceWidth) * index +
               offset.x.value +
               translation.x.value -
               (isNextForLast ? getPosition(length) : 0) +
@@ -844,11 +845,11 @@ const ResizableImage = React.memo(
           Gesture.Exclusive(doubleTapGesture, tapGesture)
         )}
       >
-        <View style={{ width, height }}>
-          <Animated.View style={[{ width, height }, animatedStyle]}>
-            {renderItem(itemProps)}
-          </Animated.View>
-        </View>
+        <Animated.View
+          style={[styles.itemContainer, { width, height }, animatedStyle]}
+        >
+          {renderItem(itemProps)}
+        </Animated.View>
       </GestureDetector>
     );
   }
@@ -999,51 +1000,45 @@ const GalleryComponent = <T extends any>(
           const hidden =
             Math.abs(i - index) > (numToRender - 1) / 2 && outOfLoopRenderRange;
 
+          if (hidden) {
+            return null;
+          }
+
           return (
-            <View
+            // @ts-ignore
+            <ResizableImage
               key={
                 keyExtractor
                   ? keyExtractor(item, i)
                   : item.id || item.key || item._id || item
               }
-              style={[
-                dimensions,
-                isFirst ? {} : { marginLeft: emptySpaceWidth },
-                index === i ? styles.activeItem : styles.inactiveItem,
-              ]}
-            >
-              {hidden ? null : (
-                // @ts-ignore
-                <ResizableImage
-                  {...{
-                    translateX,
-                    item,
-                    currentIndex,
-                    index: i,
-                    isFirst,
-                    isLast: i === data.length - 1,
-                    length: data.length,
-                    renderItem,
-                    emptySpaceWidth,
-                    doubleTapScale,
-                    doubleTapInterval,
-                    maxScale,
-                    pinchEnabled,
-                    doubleTapEnabled,
-                    disableTransitionOnScaledImage,
-                    hideAdjacentImagesOnScaledImage,
-                    disableVerticalSwipe,
-                    disableSwipeUp,
-                    loop: isLoop,
-                    onScaleChange,
-                    onScaleChangeRange,
-                    setRef,
-                    ...eventsCallbacks,
-                    ...dimensions,
-                  }}
-                />
-              )}
-            </View>
+              {...{
+                translateX,
+                item,
+                currentIndex,
+                index: i,
+                isFirst,
+                isLast: i === data.length - 1,
+                length: data.length,
+                renderItem,
+                emptySpaceWidth,
+                doubleTapScale,
+                doubleTapInterval,
+                maxScale,
+                pinchEnabled,
+                doubleTapEnabled,
+                disableTransitionOnScaledImage,
+                hideAdjacentImagesOnScaledImage,
+                disableVerticalSwipe,
+                disableSwipeUp,
+                loop: isLoop,
+                onScaleChange,
+                onScaleChangeRange,
+                setRef,
+                ...eventsCallbacks,
+                ...dimensions,
+              }}
+            />
           );
         })}
       </Animated.View>
@@ -1057,9 +1052,8 @@ const Gallery = React.forwardRef(GalleryComponent) as <T extends any>(
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: 'black' },
-  rowContainer: { flex: 1, flexDirection: 'row' },
-  activeItem: { zIndex: 1 },
-  inactiveItem: { zIndex: 0 },
+  rowContainer: { flex: 1 },
+  itemContainer: { position: 'absolute' },
 });
 
 export default Gallery;
