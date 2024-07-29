@@ -8,7 +8,7 @@ const MIN_VELOCITY = 80;
 
 export function withDecaySpring(
   userConfig: WithDecayConfig & WithSpringConfig & { clamp: [number, number] },
-  callback?: (edge: { isEdge: boolean }) => void
+  callback?: (finished?: boolean) => void
 ) {
   'worklet';
 

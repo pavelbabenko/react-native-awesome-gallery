@@ -85,11 +85,12 @@ const defaultRenderImage = ({
 type EventsCallbacks = {
   onSwipeToClose?: () => void;
   onTap?: () => void;
-  onDoubleTap?: () => void;
+  onDoubleTap?: (toScale: number) => void;
   onLongPress?: () => void;
-  onScaleStart?: () => void;
+  onScaleStart?: (scale: number) => void;
   onScaleEnd?: (scale: number) => void;
   onPanStart?: () => void;
+  onTranslationYChange?: (translationY: number, shouldClose: boolean) => void;
 };
 
 type RenderItem<T> = (
@@ -113,6 +114,7 @@ type Props<T> = EventsCallbacks & {
   doubleTapScale: number;
   maxScale: number;
   pinchEnabled: boolean;
+  swipeEnabled: boolean;
   doubleTapEnabled: boolean;
   disableTransitionOnScaledImage: boolean;
   hideAdjacentImagesOnScaledImage: boolean;
@@ -158,6 +160,7 @@ const ResizableImage = React.memo(
     doubleTapInterval,
     maxScale,
     pinchEnabled,
+    swipeEnabled,
     doubleTapEnabled,
     disableTransitionOnScaledImage,
     hideAdjacentImagesOnScaledImage,
@@ -167,6 +170,7 @@ const ResizableImage = React.memo(
     length,
     onScaleChange,
     onScaleChangeRange,
+    onTranslationYChange,
     setRef,
   }: Props<T>) => {
     const CENTER = {
@@ -342,34 +346,6 @@ const ResizableImage = React.memo(
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [index]);
 
-    const animatedStyle = useAnimatedStyle(() => {
-      const isNextForLast =
-        loop &&
-        isFirst &&
-        currentIndex.value === length - 1 &&
-        translateX.value < getPosition(length - 1);
-      const isPrevForFirst =
-        loop &&
-        isLast &&
-        currentIndex.value === 0 &&
-        translateX.value > getPosition(0);
-      return {
-        zIndex: index === currentIndex.value ? 1 : 0,
-        transform: [
-          {
-            translateX:
-              (width + emptySpaceWidth) * index +
-              offset.x.value +
-              translation.x.value -
-              (isNextForLast ? getPosition(length) : 0) +
-              (isPrevForFirst ? getPosition(length) : 0),
-          },
-          { translateY: offset.y.value + translation.y.value },
-          { scale: scale.value },
-        ],
-      };
-    });
-
     const setImageDimensions: RenderItemInfo<T>['setImageDimensions'] = ({
       width: w,
       height: h,
@@ -407,7 +383,7 @@ const ResizableImage = React.memo(
         'worklet';
         if (!isActive.value) return;
         if (onScaleStart) {
-          runOnJS(onScaleStart)();
+          runOnJS(onScaleStart)(scale.value);
         }
 
         onStart();
@@ -523,7 +499,25 @@ const ResizableImage = React.memo(
     const shouldClose = useSharedValue(false);
     const isMoving = useVector(0);
 
+    useAnimatedReaction(
+      () => {
+        if (!onTranslationYChange) {
+          return null;
+        }
+        return translation.y.value;
+      },
+      (ty, prevTy) => {
+        if (ty === null || (!ty && !prevTy)) {
+          return;
+        }
+        if (onTranslationYChange) {
+          onTranslationYChange(Math.abs(ty), shouldClose.value);
+        }
+      }
+    );
+
     const panGesture = Gesture.Pan()
+      .enabled(swipeEnabled)
       .minDistance(10)
       .maxPointers(1)
       .onBegin(() => {
@@ -730,6 +724,8 @@ const ResizableImage = React.memo(
           return;
         }
 
+        shouldClose.value = false;
+
         if (newHeight > height) {
           isMoving.y.value = 1;
           offset.y.value = withDecaySpring(
@@ -794,7 +790,7 @@ const ResizableImage = React.memo(
           return;
         }
         if (onDoubleTap) {
-          runOnJS(onDoubleTap)();
+          runOnJS(onDoubleTap)(scale.value === 1 ? doubleTapScale : 1);
         }
 
         if (scale.value === 1) {
@@ -835,6 +831,43 @@ const ResizableImage = React.memo(
         }
       });
 
+    const containerAnimatedStyle = useAnimatedStyle(() => {
+      return {
+        zIndex: index === currentIndex.value ? 1 : 0,
+        transform: [
+          {
+            translateX: (width + emptySpaceWidth) * index,
+          },
+        ],
+      };
+    });
+
+    const animatedStyle = useAnimatedStyle(() => {
+      const isNextForLast =
+        loop &&
+        isFirst &&
+        currentIndex.value === length - 1 &&
+        translateX.value < getPosition(length - 1);
+      const isPrevForFirst =
+        loop &&
+        isLast &&
+        currentIndex.value === 0 &&
+        translateX.value > getPosition(0);
+      return {
+        transform: [
+          {
+            translateX:
+              offset.x.value +
+              translation.x.value -
+              (isNextForLast ? getPosition(length) : 0) +
+              (isPrevForFirst ? getPosition(length) : 0),
+          },
+          { translateY: offset.y.value + translation.y.value },
+          { scale: scale.value },
+        ],
+      };
+    });
+
     return (
       <GestureDetector
         gesture={Gesture.Race(
@@ -846,9 +879,15 @@ const ResizableImage = React.memo(
         )}
       >
         <Animated.View
-          style={[styles.itemContainer, { width, height }, animatedStyle]}
+          style={[
+            styles.itemContainer,
+            { width, height },
+            containerAnimatedStyle,
+          ]}
         >
-          {renderItem(itemProps)}
+          <Animated.View style={[{ width, height }, animatedStyle]}>
+            {renderItem(itemProps)}
+          </Animated.View>
         </Animated.View>
       </GestureDetector>
     );
@@ -878,6 +917,7 @@ type GalleryProps<T> = EventsCallbacks & {
   style?: ViewStyle;
   containerDimensions?: { width: number; height: number };
   pinchEnabled?: boolean;
+  swipeEnabled?: boolean;
   doubleTapEnabled?: boolean;
   disableTransitionOnScaledImage?: boolean;
   hideAdjacentImagesOnScaledImage?: boolean;
@@ -899,6 +939,7 @@ const GalleryComponent = <T extends any>(
     doubleTapInterval = 500,
     maxScale = MAX_SCALE,
     pinchEnabled = true,
+    swipeEnabled = true,
     doubleTapEnabled = true,
     disableTransitionOnScaledImage = false,
     hideAdjacentImagesOnScaledImage = false,
@@ -1026,6 +1067,7 @@ const GalleryComponent = <T extends any>(
                 doubleTapInterval,
                 maxScale,
                 pinchEnabled,
+                swipeEnabled,
                 doubleTapEnabled,
                 disableTransitionOnScaledImage,
                 hideAdjacentImagesOnScaledImage,
