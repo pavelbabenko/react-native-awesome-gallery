@@ -8,7 +8,7 @@ If you love using React Native Awesome Gallery and would like to show your appre
 
 <div style="text-align: center;">
   <h1 align="center">React Native Awesome Gallery</h1>
-  <h3 align="center">Photos gallery powered by Reanimated v2 and react-native-gesture-handler</h3>
+  <h3 align="center">Photos gallery powered by Reanimated v3 and react-native-gesture-handler</h3>
 </div>
 
 <table style='width:100%;'>
