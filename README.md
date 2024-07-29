@@ -83,6 +83,7 @@ return (
 | doubleTapInterval?               | Time in milliseconds between single and double tap events                                                                                                                       | `number`                                                                                         | `500`                                                                  |
 | maxScale?                        | Maximum scale user can set with gesture                                                                                                                                         | `number`                                                                                         | `6`                                                                    |
 | pinchEnabled?                    | Is pinch gesture enabled                                                                                                                                                        | `boolean`                                                                                        | `true`                                                                 |
+| swipeEnabled?                    | Is pan gesture enabled                                                                                                                                                          | `boolean`                                                                                        | `true`                                                                 |
 | doubleTapEnabled?                | Is double tap enabled                                                                                                                                                           | `boolean`                                                                                        | `true`                                                                 |
 | disableTransitionOnScaledImage?  | Disables transition to next/previous image when scale > 1                                                                                                                       | `boolean`                                                                                        | `false`                                                                |
 | hideAdjacentImagesOnScaledImage? | Hides next and previous images when scale > 1                                                                                                                                   | `boolean`                                                                                        | `false`                                                                |
@@ -96,15 +97,16 @@ return (
 
 ## Events
 
-| Prop                      | Description                                                                                                                    | Type       |
-|---------------------------|--------------------------------------------------------------------------------------------------------------------------------|------------|
-| onSwipeToClose            | Fired when user swiped to top/bottom                                                                                           | `Function` |
-| onTap                     | Fired when user tap on image                                                                                                   | `Function` |
-| onDoubleTap               | Fired when user double tap on image                                                                                            | `Function` |
-| onLongPress               | Fired when long press is detected                                                                                              | `Function` |
-| onScaleStart              | Fired when pinch gesture starts                                                                                                | `Function` |
-| onScaleEnd(scale: number) | Fired when pinch gesture ends. Use case: add haptic feedback when user finished gesture with `scale > maxScale` or `scale < 1` | `Function` |
-| onPanStart                | Fired when pan gesture starts                                                                                                  | `Function` |
+| Prop                                                             | Description                                                                                                                    | Type       |
+|------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------|------------|
+| onSwipeToClose()                                                 | Fired when user swiped to top/bottom                                                                                           | `Function` |
+| onTranslationYChange(translationY: number, shouldClose: boolean) | `'worklet';` Fired when user is swiping vertically to close the gallery                                                        | `Worklet`  |
+| onTap()                                                          | Fired when user tap on image                                                                                                   | `Function` |
+| onDoubleTap(toScale: number)                                     | Fired when user double tap on image                                                                                            | `Function` |
+| onLongPress()                                                    | Fired when long press is detected                                                                                              | `Function` |
+| onScaleStart(scale: number)                                      | Fired when pinch gesture starts                                                                                                | `Function` |
+| onScaleEnd(scale: number)                                        | Fired when pinch gesture ends. Use case: add haptic feedback when user finished gesture with `scale > maxScale` or `scale < 1` | `Function` |
+| onPanStart()                                                     | Fired when pan gesture starts                                                                                                  | `Function` |
 
 ## Methods
 
