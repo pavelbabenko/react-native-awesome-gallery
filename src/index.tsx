@@ -836,7 +836,7 @@ const ResizableImage = React.memo(
         zIndex: index === currentIndex.value ? 1 : 0,
         transform: [
           {
-            translateX: (width + emptySpaceWidth) * index,
+            translateX: getPosition(rtl ? index : -index),
           },
         ],
       };
@@ -859,8 +859,8 @@ const ResizableImage = React.memo(
             translateX:
               offset.x.value +
               translation.x.value -
-              (isNextForLast ? getPosition(length) : 0) +
-              (isPrevForFirst ? getPosition(length) : 0),
+              (isNextForLast ? getPosition(rtl ? -length : length) : 0) +
+              (isPrevForFirst ? getPosition(rtl ? -length : length) : 0),
           },
           { translateY: offset.y.value + translation.y.value },
           { scale: scale.value },
