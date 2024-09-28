@@ -28,7 +28,6 @@ import {
   GestureDetector,
   GestureHandlerRootView,
 } from 'react-native-gesture-handler';
-import { useVector } from 'react-native-redash';
 import {
   clamp,
   withDecaySpring,
@@ -45,6 +44,12 @@ const SPACE_BETWEEN_IMAGES = 40;
 type Dimensions = {
   height: number;
   width: number;
+};
+
+export const useVector = (x1 = 0, y1?: number) => {
+  const x = useSharedValue(x1);
+  const y = useSharedValue(y1 ?? x1);
+  return { x, y };
 };
 
 export const snapPoint = (
