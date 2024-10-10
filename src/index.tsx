@@ -931,6 +931,8 @@ type GalleryProps<T> = EventsCallbacks & {
   loop?: boolean;
   onScaleChange?: (scale: number) => void;
   onScaleChangeRange?: { start: number; end: number };
+
+  containerTestID?: string
 };
 
 const GalleryComponent = <T extends any>(
@@ -957,6 +959,7 @@ const GalleryComponent = <T extends any>(
     loop = false,
     onScaleChange,
     onScaleChangeRange,
+    containerTestID,
     ...eventsCallbacks
   }: GalleryProps<T>,
   ref: GalleryReactRef
@@ -1034,7 +1037,7 @@ const GalleryComponent = <T extends any>(
 
   return (
     <GestureHandlerRootView style={[styles.container, style]}>
-      <Animated.View style={[styles.rowContainer, animatedStyle]}>
+      <Animated.View style={[styles.rowContainer, animatedStyle]} testID={containerTestID}>
         {data.map((item: any, i) => {
           const isFirst = i === 0;
 
