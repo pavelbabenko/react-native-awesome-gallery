@@ -33,7 +33,7 @@ If you love using React Native Awesome Gallery and would like to show your appre
 - Fully customizable
 - Both orientations (portrait + landscape)
 - Infinite list
-- Supports both iOS and Android.
+- Supports iOS, Android, and Web.
 
 ## Installation
 

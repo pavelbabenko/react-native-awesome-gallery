@@ -13,13 +13,9 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import AwesomeGallery, {
-  GalleryRef,
-  RenderItemInfo,
-} from 'react-native-awesome-gallery';
+import AwesomeGallery, { GalleryRef } from 'react-native-awesome-gallery';
 import * as React from 'react';
 import type { NavParams } from '../navigation/types';
-import { Image } from 'expo-image';
 import Animated, {
   FadeInDown,
   FadeInUp,
@@ -27,23 +23,6 @@ import Animated, {
   FadeOutUp,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-
-const renderItem = ({
-  item,
-  setImageDimensions,
-}: RenderItemInfo<{ uri: string }>) => {
-  return (
-    <Image
-      source={item.uri}
-      style={StyleSheet.absoluteFillObject}
-      contentFit="contain"
-      onLoad={(e) => {
-        const { width, height } = e.source;
-        setImageDimensions({ width, height });
-      }}
-    />
-  );
-};
 
 export const Photos = () => {
   const { top, bottom } = useSafeAreaInsets();
@@ -103,9 +82,7 @@ export const Photos = () => {
       )}
       <AwesomeGallery
         ref={gallery}
-        data={params.images.map((uri) => ({ uri }))}
-        keyExtractor={(item) => item.uri}
-        renderItem={renderItem}
+        data={params.images}
         initialIndex={params.index}
         numToRender={3}
         doubleTapInterval={150}

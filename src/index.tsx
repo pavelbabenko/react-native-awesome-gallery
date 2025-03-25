@@ -76,9 +76,19 @@ const defaultRenderImage = ({
 }: RenderItemInfo<any>) => {
   return (
     <Image
-      onLoad={(e) => {
-        const { height: h, width: w } = e.nativeEvent.source;
-        setImageDimensions({ height: h, width: w });
+      onLoad={() => {
+        Image.getSize(
+          item,
+          (width, height) => {
+            setImageDimensions({
+              height,
+              width,
+            });
+          },
+          (err) => {
+            console.log('Image.getSize error', err);
+          }
+        );
       }}
       source={{ uri: item }}
       resizeMode="contain"
@@ -786,7 +796,7 @@ const ResizableImage = React.memo(
       .onEnd(({ x, y, numberOfPointers }) => {
         'worklet';
         if (!isActive.value) return;
-        if (numberOfPointers !== 1) return;
+        if (numberOfPointers > 1) return;
         if (onTap && interruptedScroll.value) {
           interruptedScroll.value = false;
           if (onTap) {
