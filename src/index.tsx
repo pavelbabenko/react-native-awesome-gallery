@@ -128,6 +128,7 @@ type Props<T> = EventsCallbacks & {
   loop: boolean;
   onScaleChange?: (scale: number) => void;
   onScaleChangeRange?: { start: number; end: number };
+  lockVerticalPanUntilExceedsZoom?: boolean;
 
   setRef: (index: number, value: ItemRef) => void;
 };
@@ -176,6 +177,7 @@ const ResizableImage = React.memo(
     onScaleChange,
     onScaleChangeRange,
     onTranslationYChange,
+    lockVerticalPanUntilExceedsZoom,
     setRef,
   }: Props<T>) => {
     const CENTER = {
@@ -470,6 +472,17 @@ const ResizableImage = React.memo(
               );
               moved = true;
             }
+
+            // In this mode, we haven't actually been panning horizontally,
+            // so we shouldn't add a horizontal exit velocity.
+            if (lockVerticalPanUntilExceedsZoom) {
+              // For some reason `isVertical` is undefined when a pinch occurs. No clue why, that seems to break sharedValue guarantees.
+              const lockY = !!isVertical?.value && newHeight <= height;
+              if (lockY) {
+                moved = false;
+              }
+            }
+
             if (!moved) {
               translation.x.value = withTiming(nextTransX);
             }
@@ -566,7 +579,18 @@ const ResizableImage = React.memo(
 
         const x = getEdgeX();
 
-        if (!isVertical.value || scale.value > 1) {
+        const newHeight = scale.value * layout.y.value;
+
+        // This can be a prop, or just always be how the logic is decided.
+
+        const lockY = lockVerticalPanUntilExceedsZoom
+          ? !isVertical.value && newHeight <= height
+          : false;
+        const lockX = lockVerticalPanUntilExceedsZoom
+          ? isVertical.value && newHeight <= height
+          : isVertical.value && scale.value === 1;
+
+        if (!lockX) {
           const clampedX = clamp(
             translationX,
             x[0] - offset.x.value,
@@ -620,22 +644,23 @@ const ResizableImage = React.memo(
           }
         }
 
-        const newHeight = scale.value * layout.y.value;
-
         const edgeY = getEdgeY();
 
-        if (newHeight > height) {
-          translation.y.value = withRubberBandClamp(
-            translationY,
-            0.55,
-            newHeight,
-            [edgeY[0] - offset.y.value, edgeY[1] - offset.y.value]
-          );
-        } else if (
-          !(scale.value === 1 && translateX.value !== getPosition()) &&
-          (!disableSwipeUp || translationY >= 0)
-        ) {
-          translation.y.value = translationY;
+        if (!lockY) {
+          if (newHeight > height) {
+            // Pans on Y
+            translation.y.value = withRubberBandClamp(
+              translationY,
+              0.55,
+              newHeight,
+              [edgeY[0] - offset.y.value, edgeY[1] - offset.y.value]
+            );
+          } else if (
+            !(scale.value === 1 && translateX.value !== getPosition()) &&
+            (!disableSwipeUp || translationY >= 0)
+          ) {
+            translation.y.value = translationY;
+          }
         }
 
         if (isVertical.value && newHeight <= height) {
@@ -931,6 +956,7 @@ type GalleryProps<T> = EventsCallbacks & {
   loop?: boolean;
   onScaleChange?: (scale: number) => void;
   onScaleChangeRange?: { start: number; end: number };
+  lockVerticalPanUntilExceedsZoom?: boolean;
 };
 
 const GalleryComponent = <T extends any>(
@@ -957,6 +983,7 @@ const GalleryComponent = <T extends any>(
     loop = false,
     onScaleChange,
     onScaleChangeRange,
+    lockVerticalPanUntilExceedsZoom,
     ...eventsCallbacks
   }: GalleryProps<T>,
   ref: GalleryReactRef
@@ -1082,6 +1109,7 @@ const GalleryComponent = <T extends any>(
                 onScaleChange,
                 onScaleChangeRange,
                 setRef,
+                lockVerticalPanUntilExceedsZoom,
                 ...eventsCallbacks,
                 ...dimensions,
               }}
