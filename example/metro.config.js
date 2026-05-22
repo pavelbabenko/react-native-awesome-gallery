@@ -1,7 +1,8 @@
 const path = require('path');
 const escape = require('escape-string-regexp');
 const { getDefaultConfig } = require('@expo/metro-config');
-const exclusionList = require('metro-config/src/defaults/exclusionList');
+const exclusionList = require('metro-config/private/defaults/exclusionList')
+  .default;
 const pak = require('../package.json');
 
 const root = path.resolve(__dirname, '..');

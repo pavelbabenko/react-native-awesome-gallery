@@ -22,6 +22,7 @@ import Animated, {
   runOnJS,
   withSpring,
   cancelAnimation,
+  SharedValue,
 } from 'react-native-reanimated';
 import {
   Gesture,
@@ -107,8 +108,8 @@ type Props<T> = EventsCallbacks & {
   index: number;
   isFirst: boolean;
   isLast: boolean;
-  translateX: Animated.SharedValue<number>;
-  currentIndex: Animated.SharedValue<number>;
+  translateX: SharedValue<number>;
+  currentIndex: SharedValue<number>;
   renderItem: RenderItem<T>;
   width: number;
   height: number;
@@ -985,7 +986,7 @@ const GalleryComponent = <T extends any>(
   }));
 
   const changeIndex = useCallback(
-    (newIndex) => {
+    (newIndex: number) => {
       onIndexChange?.(newIndex);
       setIndex(newIndex);
     },

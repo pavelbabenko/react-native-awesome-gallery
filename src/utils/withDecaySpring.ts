@@ -9,10 +9,10 @@ const MIN_VELOCITY = 80;
 export function withDecaySpring(
   userConfig: WithDecayConfig & WithSpringConfig & { clamp: [number, number] },
   callback?: (finished?: boolean) => void
-) {
+): number {
   'worklet';
 
-  return defineAnimation(0, () => {
+  return defineAnimation<any>(0, () => {
     'worklet';
     const config = {
       deceleration: 0.997,
