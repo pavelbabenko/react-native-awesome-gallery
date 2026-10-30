@@ -82,7 +82,7 @@ const defaultRenderImage = ({
       }}
       source={{ uri: item }}
       resizeMode="contain"
-      style={StyleSheet.absoluteFillObject}
+      style={StyleSheet.absoluteFill}
     />
   );
 };
