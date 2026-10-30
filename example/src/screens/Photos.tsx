@@ -35,7 +35,7 @@ const renderItem = ({
   return (
     <Image
       source={item.uri}
-      style={StyleSheet.absoluteFillObject}
+      style={StyleSheet.absoluteFill}
       contentFit="contain"
       onLoad={(e) => {
         const { width, height } = e.source;
